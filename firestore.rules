@@ -1,0 +1,279 @@
+rules_version = '2';
+
+// Quy tắc bảo mật Firestore cho "Việc của Khoa".
+// Nguyên tắc: mặc định TỪ CHỐI; mọi đường dẫn đều phải được cấp quyền tường minh.
+// Vai trò/quyền được bản sao hoá (denormalize) thành `users/{uid}.scopes` (perm -> danh sách unitId, '*' = toàn Khoa)
+// vì Rules không có lambda. Chỉ người có quyền `user.manage` (hoặc quản trị viên) mới được ghi `scopes`.
+// Xem docs/SECURITY-REVIEW.md và docs/DATA-MODEL.md.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Định danh & quyền ----------
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function userPath(id) { return /databases/$(database)/documents/users/$(id); }
+    function hasProfile() { return signedIn() && exists(userPath(uid())); }
+    function me() { return get(userPath(uid())).data; }
+    function isActive() { return hasProfile() && me().active == true; }
+    function isAdmin() { return isActive() && exists(/databases/$(database)/documents/admins/$(uid())); }
+    function scopesOf(p) { return me().scopes.get(p, []); }
+    function hasGlobal(p) { return isAdmin() || ('*' in scopesOf(p)); }
+    function hasScope(p, unit) { return isAdmin() || ('*' in scopesOf(p)) || (unit in scopesOf(p)); }
+
+    function isStr(v, mn, mx) { return v is string && v.size() >= mn && v.size() <= mx; }
+    function isIso(v) { return v is string && v.size() >= 20 && v.size() <= 30 && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$'); }
+
+    // ---------- Khởi tạo quản trị viên đầu tiên (một lần) ----------
+    // Một batch gồm: meta/bootstrap + admins/{uid} + kích hoạt users/{uid}. Sau khi meta/bootstrap tồn tại thì không ai tạo thêm admin qua đường này.
+    match /meta/bootstrap {
+      allow read: if signedIn();
+      allow create: if signedIn() && !exists(/databases/$(database)/documents/meta/bootstrap)
+        && request.resource.data.keys().hasOnly(['adminUid', 'createdAt'])
+        && request.resource.data.adminUid == uid()
+        && existsAfter(/databases/$(database)/documents/admins/$(uid()));
+      allow update, delete: if false;
+    }
+
+    match /admins/{id} {
+      allow get: if signedIn() && id == uid();
+      allow list: if false;
+      allow create: if signedIn() && id == uid()
+        && !exists(/databases/$(database)/documents/meta/bootstrap)
+        && getAfter(/databases/$(database)/documents/meta/bootstrap).data.adminUid == uid();
+      allow update, delete: if false;
+    }
+
+    // ---------- Người dùng ----------
+    match /users/{id} {
+      allow get: if signedIn() && (id == uid() || isActive());
+      allow list: if isActive();
+      // Tự đăng ký: luôn ở trạng thái chưa kích hoạt, không có quyền nào.
+      allow create: if signedIn() && id == uid()
+        && request.resource.data.keys().hasOnly(['name', 'email', 'active', 'unitId', 'assignments', 'scopes', 'createdAt'])
+        && isStr(request.resource.data.name, 1, 100)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.active == false
+        && request.resource.data.unitId == null
+        && request.resource.data.assignments.size() == 0
+        && request.resource.data.scopes.size() == 0
+        && isIso(request.resource.data.createdAt);
+      allow update: if signedIn() && (
+        // người dùng tự sửa tên
+        (id == uid() && hasProfile() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']) && isStr(request.resource.data.name, 1, 100))
+        // quản trị đầu tiên tự kích hoạt trong cùng batch với admins/{uid}
+        || (id == uid() && !exists(/databases/$(database)/documents/admins/$(uid())) && existsAfter(/databases/$(database)/documents/admins/$(uid()))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'unitId', 'assignments', 'scopes']))
+        // người có quyền quản lý người dùng
+        // (không được sửa hồ sơ/quyền của quản trị viên, và không tự sửa quyền của chính mình, trừ khi là quản trị viên)
+        || (isActive() && hasGlobal('user.manage')
+            && (isAdmin() || (id != uid() && !exists(/databases/$(database)/documents/admins/$(id))))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'active', 'unitId', 'assignments', 'scopes']))
+      );
+      allow delete: if false;
+    }
+
+    // ---------- Cấu hình động ----------
+    function configWritable() { return isActive() && hasGlobal('config.edit'); }
+
+    match /units/{id} {
+      allow read: if isActive();
+      allow create, update: if configWritable() && isStr(request.resource.data.name, 1, 80) && request.resource.data.id == id;
+      allow delete: if false;
+    }
+    match /roles/{id} {
+      allow read: if isActive();
+      allow create, update: if configWritable() && isStr(request.resource.data.name, 1, 80) && request.resource.data.key == id && request.resource.data.permissions is list;
+      allow delete: if false;
+    }
+    match /taskTypes/{id} {
+      allow read: if isActive();
+      allow create, update: if configWritable() && isStr(request.resource.data.name, 1, 80) && request.resource.data.id == id
+        && isStr(request.resource.data.workflowId, 1, 40) && request.resource.data.fields is list && request.resource.data.fields.size() <= 40
+        && existsAfter(/databases/$(database)/documents/workflows/$(request.resource.data.workflowId));
+      allow delete: if false;
+    }
+    match /workflows/{id} {
+      allow read: if isActive();
+      // Rules của tasks dựa vào các trường dẫn xuất => bắt buộc đúng kiểu.
+      allow create, update: if configWritable() && request.resource.data.id == id
+        && isStr(request.resource.data.initialState, 1, 40)
+        && request.resource.data.states is list && request.resource.data.states.size() >= 2 && request.resource.data.states.size() <= 20
+        && request.resource.data.allowed is map && request.resource.data.needsComment is map && request.resource.data.doneStates is list;
+      allow delete: if false;
+    }
+    match /templates/{id} {
+      allow read: if isActive();
+      allow create, update: if configWritable() && isStr(request.resource.data.name, 1, 100) && request.resource.data.id == id;
+      allow delete: if false;
+    }
+    match /terms/{id} {
+      allow read: if isActive();
+      allow create, update: if configWritable() && isStr(request.resource.data.name, 1, 80) && request.resource.data.id == id;
+      allow delete: if false;
+    }
+    match /settings/app {
+      allow read: if isActive();
+      allow create, update: if configWritable() && request.resource.data.riskDays is int && request.resource.data.riskProgress is int;
+      allow delete: if false;
+    }
+    // Lịch sử phiên bản cấu hình: chỉ thêm, không sửa/xoá.
+    match /configVersions/{id} {
+      allow read: if configWritable();
+      allow create: if configWritable() && request.resource.data.changedBy == uid();
+      allow update, delete: if false;
+    }
+
+    // ---------- Công việc ----------
+    function taskReadable(t) {
+      return isActive() && (uid() in t.participantIds || t.createdBy == uid() || hasScope('task.view_all', t.unitId));
+    }
+    function kindsAllow(kinds, t) {
+      return ('assignee' in kinds && uid() in t.assigneeIds)
+        || ('collaborator' in kinds && uid() in t.collaboratorIds)
+        || ('reviewer' in kinds && uid() in t.reviewerIds)
+        || ('creator' in kinds && t.createdBy == uid())
+        || ('approver' in kinds && hasScope('task.approve', t.unitId))
+        || ('approver_all' in kinds && hasGlobal('task.approve'))
+        || ('assigner' in kinds && hasScope('task.assign', t.unitId));
+    }
+    function wfOf(t) { return get(/databases/$(database)/documents/workflows/$(t.workflowId)).data; }
+    function transKey(o, n) { return o.stateKey + '>' + n.stateKey; }
+
+    function validTaskShape(d) {
+      return isStr(d.title, 1, 200) && isStr(d.description, 0, 5000)
+        && d.priority in ['low', 'normal', 'high']
+        && d.labels is list && d.labels.size() <= 10
+        && d.checklist is list && d.checklist.size() <= 50
+        && d.links is list && d.links.size() <= 20
+        && d.customFields is map
+        && d.assigneeIds is list && d.collaboratorIds is list && d.reviewerIds is list && d.participantIds is list
+        && d.participantIds.size() <= 60
+        && d.participantIds.hasAll(d.assigneeIds) && d.participantIds.hasAll(d.collaboratorIds) && d.participantIds.hasAll(d.reviewerIds)
+        && d.assigneeIds.size() >= 1
+        && (d.dueAt == null || isStr(d.dueAt, 10, 10)) && (d.startAt == null || isStr(d.startAt, 10, 10))
+        && isIso(d.createdAt) && isIso(d.updatedAt)
+        && d.activity is map && d.activity.size() <= 1000
+        && (d.lastActivityId == null || d.lastActivityId is string)
+        && isStr(d.statusNote, 0, 500) && (d.statusNoteAt == null || isIso(d.statusNoteAt));
+    }
+
+    function taskImmutableOk(o, n) {
+      return n.id == o.id && n.typeId == o.typeId && n.workflowId == o.workflowId && n.unitId == o.unitId
+        && n.createdBy == o.createdBy && n.createdAt == o.createdAt && n.templateId == o.templateId && n.bulkId == o.bulkId;
+    }
+
+    // Nhật ký là map { idMục: {actorId, action, detail, createdAt} } — chỉ thêm, không sửa/xoá mục cũ, tối đa 1 mục mỗi lần ghi,
+    // mục mới được chỉ định bởi `lastActivityId` và phải do chính người gọi ghi.
+    function activityOk(o, n) {
+      let d = n.activity.diff(o.activity);
+      return d.removedKeys().size() == 0 && d.changedKeys().size() == 0 && d.addedKeys().size() <= 1
+        && (d.addedKeys().size() == 0
+            || (d.addedKeys().hasOnly([n.lastActivityId])
+                && n.activity[n.lastActivityId].actorId == uid()
+                && isStr(n.activity[n.lastActivityId].action, 1, 40)
+                && isStr(n.activity[n.lastActivityId].detail, 0, 500)));
+    }
+
+    // Đổi trạng thái phải theo quy trình; hoàn thành phải đặt completedAt; trả lại/yêu cầu ý kiến phải có ý kiến.
+    function stateRulesOk(o, n) {
+      return n.stateKey == o.stateKey
+        ? n.completedAt == o.completedAt
+        : (transitionAllowed(o, n) && completedConsistent(o, n) && commentOk(o, n)
+            && n.activity.diff(o.activity).addedKeys().size() == 1); // mọi lần đổi trạng thái phải để lại nhật ký
+    }
+    function transitionAllowed(o, n) {
+      return kindsAllow(wfOf(o).allowed.get(transKey(o, n), []), o);
+    }
+    function completedConsistent(o, n) {
+      return n.stateKey in wfOf(o).doneStates ? isIso(n.completedAt) : n.completedAt == null;
+    }
+    function commentOk(o, n) {
+      return !wfOf(o).needsComment.get(transKey(o, n), false)
+        || (n.activity.diff(o.activity).addedKeys().size() == 1 && n.activity[n.lastActivityId].detail.size() > 0
+            && n.statusNote.size() > 0 && n.statusNoteAt == n.updatedAt);
+    }
+
+    match /tasks/{taskId} {
+      allow get: if taskReadable(resource.data);
+      allow list: if taskReadable(resource.data);
+
+      allow create: if isActive() && validTaskShape(request.resource.data)
+        && request.resource.data.createdBy == uid()
+        && request.resource.data.id == taskId
+        && request.resource.data.completedAt == null
+        && request.resource.data.activity.size() == 0
+        && get(/databases/$(database)/documents/taskTypes/$(request.resource.data.typeId)).data.workflowId == request.resource.data.workflowId
+        && request.resource.data.stateKey == wfOf(request.resource.data).initialState
+        && (
+          // tự tạo việc cho chính mình trong đơn vị của mình
+          (request.resource.data.assigneeIds == [uid()] && request.resource.data.collaboratorIds.size() == 0 && request.resource.data.bulkId == null && request.resource.data.unitId == me().unitId
+            && !(uid() in request.resource.data.reviewerIds))
+          || hasScope('task.assign', request.resource.data.unitId)
+          || (request.resource.data.bulkId != null && hasScope('task.bulk_assign', request.resource.data.unitId))
+        );
+
+      allow update: if isActive() && validTaskShape(request.resource.data)
+        && taskImmutableOk(resource.data, request.resource.data)
+        && activityOk(resource.data, request.resource.data)
+        && stateRulesOk(resource.data, request.resource.data)
+        && (
+          // 1) người có quyền giao việc trong đơn vị: sửa nội dung; hạn và nhân sự cần quyền riêng
+          (hasScope('task.assign', resource.data.unitId)
+            && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['dueAt']) || hasScope('task.extend', resource.data.unitId))
+            && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['assigneeIds', 'collaboratorIds', 'reviewerIds', 'participantIds']) || hasScope('task.reassign', resource.data.unitId)))
+          // 2) người phụ trách/phối hợp: nội dung thực hiện + trạng thái
+          || ((uid() in resource.data.assigneeIds || uid() in resource.data.collaboratorIds)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stateKey', 'checklist', 'links', 'customFields', 'description', 'updatedAt', 'completedAt', 'activity', 'lastActivityId', 'statusNote', 'statusNoteAt']))
+          // 3) người duyệt / người có quyền duyệt: chỉ trạng thái
+          || ((uid() in resource.data.reviewerIds || hasScope('task.approve', resource.data.unitId) || resource.data.createdBy == uid())
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stateKey', 'updatedAt', 'completedAt', 'activity', 'lastActivityId', 'statusNote', 'statusNoteAt']))
+          // 4) gia hạn
+          || (hasScope('task.extend', resource.data.unitId)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dueAt', 'updatedAt', 'activity', 'lastActivityId']))
+          // 5) đổi người phụ trách
+          || (hasScope('task.reassign', resource.data.unitId)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assigneeIds', 'collaboratorIds', 'reviewerIds', 'participantIds', 'updatedAt', 'activity', 'lastActivityId']))
+        );
+
+      allow delete: if false; // không xoá cứng; dùng trạng thái/lưu trữ
+
+      match /comments/{cid} {
+        allow read: if taskReadable(get(/databases/$(database)/documents/tasks/$(taskId)).data);
+        allow create: if taskReadable(get(/databases/$(database)/documents/tasks/$(taskId)).data)
+          && request.resource.data.keys().hasOnly(['authorId', 'body', 'mentions', 'createdAt'])
+          && request.resource.data.authorId == uid()
+          && isStr(request.resource.data.body, 1, 2000)
+          && request.resource.data.mentions is list && request.resource.data.mentions.size() <= 20
+          && isIso(request.resource.data.createdAt);
+        allow update, delete: if false;
+      }
+    }
+
+    // ---------- Thông báo trong app: users/{uid}/notifications/{id} ----------
+    // ID = "<ISO thời gian>-<ngẫu nhiên>" nên sắp theo ID là sắp theo thời gian (không cần composite index).
+    match /users/{owner}/notifications/{id} {
+      allow read: if isActive() && owner == uid();
+      allow create: if isActive()
+        && request.resource.data.keys().hasOnly(['actorId', 'taskId', 'kind', 'text', 'createdAt', 'readAt'])
+        && request.resource.data.actorId == uid()
+        && request.resource.data.kind in ['assigned', 'mention', 'review_requested', 'approved', 'returned', 'reminder', 'overdue', 'extended', 'reassigned']
+        && isStr(request.resource.data.text, 1, 300)
+        && request.resource.data.readAt == null
+        && isIso(request.resource.data.createdAt);
+      allow update: if isActive() && owner == uid() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt']);
+      allow delete: if isActive() && owner == uid();
+    }
+
+    // ---------- Bộ lọc đã lưu (riêng từng người) ----------
+    match /savedViews/{id} {
+      allow read, delete: if isActive() && resource.data.ownerId == uid();
+      allow create: if isActive() && request.resource.data.ownerId == uid() && isStr(request.resource.data.name, 1, 80);
+      allow update: if isActive() && resource.data.ownerId == uid() && request.resource.data.ownerId == uid();
+    }
+
+    // ---------- Mặc định: từ chối ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

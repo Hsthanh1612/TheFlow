@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.tools/
+.env
+.env.*
+!.env.example
+*.log
+.firebase/
+firebase-debug.log*
+firestore-debug.log
+ui-debug.log
+serviceAccount*.json
+*-service-account*.json
+.DS_Store
+coverage/
+test-results/
+playwright-report/

@@ -1,0 +1,590 @@
+{
+  "version": 1,
+  "units": [
+    {
+      "id": "khoa",
+      "parentId": null,
+      "name": "Khoa",
+      "kind": "khoa",
+      "color": "#2563EB",
+      "headId": null,
+      "archived": false
+    }
+  ],
+  "roles": [
+    {
+      "key": "quan_tri",
+      "name": "Quản trị",
+      "permissions": [
+        "task.view_all",
+        "task.assign",
+        "task.bulk_assign",
+        "task.approve",
+        "task.reassign",
+        "task.extend",
+        "manage.view",
+        "report.export",
+        "config.edit",
+        "user.manage"
+      ],
+      "archived": false
+    },
+    {
+      "key": "truong_khoa",
+      "name": "Trưởng khoa",
+      "permissions": [
+        "task.view_all",
+        "task.assign",
+        "task.bulk_assign",
+        "task.approve",
+        "task.reassign",
+        "task.extend",
+        "manage.view",
+        "report.export",
+        "config.edit"
+      ],
+      "archived": false
+    },
+    {
+      "key": "truong_bo_mon",
+      "name": "Trưởng bộ môn",
+      "permissions": [
+        "task.view_all",
+        "task.assign",
+        "task.bulk_assign",
+        "task.approve",
+        "task.reassign",
+        "task.extend",
+        "manage.view",
+        "report.export"
+      ],
+      "archived": false
+    },
+    {
+      "key": "giang_vien",
+      "name": "Giảng viên",
+      "permissions": [],
+      "archived": false
+    },
+    {
+      "key": "giao_vu",
+      "name": "Giáo vụ",
+      "permissions": [
+        "task.view_all"
+      ],
+      "archived": false
+    }
+  ],
+  "workflows": [
+    {
+      "id": "duyet_1_cap",
+      "name": "Có duyệt",
+      "initialState": "todo",
+      "states": [
+        {
+          "key": "todo",
+          "label": "Chờ làm",
+          "category": "todo"
+        },
+        {
+          "key": "doing",
+          "label": "Đang làm",
+          "category": "doing"
+        },
+        {
+          "key": "review",
+          "label": "Chờ duyệt",
+          "category": "review"
+        },
+        {
+          "key": "done",
+          "label": "Hoàn thành",
+          "category": "done"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "todo",
+          "to": "doing",
+          "allowed": [
+            "assignee",
+            "collaborator",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "doing",
+          "to": "todo",
+          "allowed": [
+            "assignee",
+            "collaborator",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "doing",
+          "to": "review",
+          "allowed": [
+            "assignee",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "review",
+          "to": "done",
+          "allowed": [
+            "reviewer",
+            "approver"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "review",
+          "to": "doing",
+          "allowed": [
+            "reviewer",
+            "approver"
+          ],
+          "requiresComment": true
+        },
+        {
+          "from": "done",
+          "to": "doing",
+          "allowed": [
+            "assigner",
+            "approver"
+          ],
+          "requiresComment": false
+        }
+      ],
+      "archived": false,
+      "allowed": {
+        "todo>doing": [
+          "assignee",
+          "collaborator",
+          "assigner"
+        ],
+        "doing>todo": [
+          "assignee",
+          "collaborator",
+          "assigner"
+        ],
+        "doing>review": [
+          "assignee",
+          "assigner"
+        ],
+        "review>done": [
+          "reviewer",
+          "approver"
+        ],
+        "review>doing": [
+          "reviewer",
+          "approver"
+        ],
+        "done>doing": [
+          "assigner",
+          "approver"
+        ]
+      },
+      "needsComment": {
+        "todo>doing": false,
+        "doing>todo": false,
+        "doing>review": false,
+        "review>done": false,
+        "review>doing": true,
+        "done>doing": false
+      },
+      "doneStates": [
+        "done"
+      ]
+    },
+    {
+      "id": "duyet_2_cap",
+      "name": "Duyệt 2 cấp (Trưởng bộ môn → Trưởng khoa)",
+      "initialState": "todo",
+      "states": [
+        {
+          "key": "todo",
+          "label": "Giao việc",
+          "category": "todo"
+        },
+        {
+          "key": "doing",
+          "label": "Thực hiện",
+          "category": "doing"
+        },
+        {
+          "key": "bm_review",
+          "label": "Trưởng bộ môn duyệt",
+          "category": "review"
+        },
+        {
+          "key": "dean_review",
+          "label": "Trưởng khoa duyệt",
+          "category": "review"
+        },
+        {
+          "key": "done",
+          "label": "Hoàn thành",
+          "category": "done"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "todo",
+          "to": "doing",
+          "allowed": [
+            "assignee",
+            "collaborator",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "doing",
+          "to": "todo",
+          "allowed": [
+            "assignee",
+            "collaborator",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "doing",
+          "to": "bm_review",
+          "allowed": [
+            "assignee",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "bm_review",
+          "to": "dean_review",
+          "allowed": [
+            "reviewer",
+            "approver"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "bm_review",
+          "to": "doing",
+          "allowed": [
+            "reviewer",
+            "approver"
+          ],
+          "requiresComment": true
+        },
+        {
+          "from": "dean_review",
+          "to": "done",
+          "allowed": [
+            "approver_all"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "dean_review",
+          "to": "doing",
+          "allowed": [
+            "approver_all"
+          ],
+          "requiresComment": true
+        },
+        {
+          "from": "done",
+          "to": "doing",
+          "allowed": [
+            "approver_all"
+          ],
+          "requiresComment": false
+        }
+      ],
+      "archived": false,
+      "allowed": {
+        "todo>doing": [
+          "assignee",
+          "collaborator",
+          "assigner"
+        ],
+        "doing>todo": [
+          "assignee",
+          "collaborator",
+          "assigner"
+        ],
+        "doing>bm_review": [
+          "assignee",
+          "assigner"
+        ],
+        "bm_review>dean_review": [
+          "reviewer",
+          "approver"
+        ],
+        "bm_review>doing": [
+          "reviewer",
+          "approver"
+        ],
+        "dean_review>done": [
+          "approver_all"
+        ],
+        "dean_review>doing": [
+          "approver_all"
+        ],
+        "done>doing": [
+          "approver_all"
+        ]
+      },
+      "needsComment": {
+        "todo>doing": false,
+        "doing>todo": false,
+        "doing>bm_review": false,
+        "bm_review>dean_review": false,
+        "bm_review>doing": true,
+        "dean_review>done": false,
+        "dean_review>doing": true,
+        "done>doing": false
+      },
+      "doneStates": [
+        "done"
+      ]
+    },
+    {
+      "id": "khong_duyet",
+      "name": "Không cần duyệt",
+      "initialState": "todo",
+      "states": [
+        {
+          "key": "todo",
+          "label": "Chờ làm",
+          "category": "todo"
+        },
+        {
+          "key": "doing",
+          "label": "Đang làm",
+          "category": "doing"
+        },
+        {
+          "key": "done",
+          "label": "Hoàn thành",
+          "category": "done"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "todo",
+          "to": "doing",
+          "allowed": [
+            "assignee",
+            "collaborator",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "doing",
+          "to": "todo",
+          "allowed": [
+            "assignee",
+            "collaborator",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "doing",
+          "to": "done",
+          "allowed": [
+            "assignee",
+            "assigner"
+          ],
+          "requiresComment": false
+        },
+        {
+          "from": "done",
+          "to": "doing",
+          "allowed": [
+            "assigner"
+          ],
+          "requiresComment": false
+        }
+      ],
+      "archived": false,
+      "allowed": {
+        "todo>doing": [
+          "assignee",
+          "collaborator",
+          "assigner"
+        ],
+        "doing>todo": [
+          "assignee",
+          "collaborator",
+          "assigner"
+        ],
+        "doing>done": [
+          "assignee",
+          "assigner"
+        ],
+        "done>doing": [
+          "assigner"
+        ]
+      },
+      "needsComment": {
+        "todo>doing": false,
+        "doing>todo": false,
+        "doing>done": false,
+        "done>doing": false
+      },
+      "doneStates": [
+        "done"
+      ]
+    }
+  ],
+  "taskTypes": [
+    {
+      "id": "bao_cao",
+      "name": "Báo cáo",
+      "color": "#2563EB",
+      "workflowId": "duyet_2_cap",
+      "archived": false,
+      "fields": [
+        {
+          "key": "hoc_ky",
+          "label": "Học kỳ",
+          "type": "select",
+          "required": true,
+          "options": [
+            "HK1",
+            "HK2",
+            "HK hè"
+          ],
+          "order": 1,
+          "archived": false
+        },
+        {
+          "key": "don_vi_nop",
+          "label": "Đơn vị nộp",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "order": 2,
+          "archived": false
+        },
+        {
+          "key": "so_trang_toi_da",
+          "label": "Số trang tối đa",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "order": 3,
+          "archived": false
+        },
+        {
+          "key": "tep_bieu_mau",
+          "label": "Tệp biểu mẫu",
+          "type": "file",
+          "required": false,
+          "options": [],
+          "order": 4,
+          "archived": false
+        }
+      ]
+    },
+    {
+      "id": "de_thi",
+      "name": "Đề thi",
+      "color": "#B45309",
+      "workflowId": "duyet_1_cap",
+      "archived": false,
+      "fields": [
+        {
+          "key": "hoc_phan",
+          "label": "Học phần",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "order": 1,
+          "archived": false
+        }
+      ]
+    },
+    {
+      "id": "hop",
+      "name": "Họp",
+      "color": "#6D28D9",
+      "workflowId": "khong_duyet",
+      "archived": false,
+      "fields": [
+        {
+          "key": "dia_diem",
+          "label": "Địa điểm",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "order": 1,
+          "archived": false
+        }
+      ]
+    },
+    {
+      "id": "coi_thi",
+      "name": "Coi thi",
+      "color": "#0F766E",
+      "workflowId": "khong_duyet",
+      "archived": false,
+      "fields": []
+    },
+    {
+      "id": "nckh",
+      "name": "NCKH",
+      "color": "#15803D",
+      "workflowId": "duyet_1_cap",
+      "archived": false,
+      "fields": []
+    },
+    {
+      "id": "tuyen_sinh",
+      "name": "Tuyển sinh",
+      "color": "#BE185D",
+      "workflowId": "duyet_1_cap",
+      "archived": false,
+      "fields": []
+    },
+    {
+      "id": "giao_vu",
+      "name": "Giáo vụ",
+      "color": "#4B5563",
+      "workflowId": "duyet_1_cap",
+      "archived": false,
+      "fields": []
+    },
+    {
+      "id": "chuong_trinh",
+      "name": "Chương trình đào tạo",
+      "color": "#1D4ED8",
+      "workflowId": "duyet_1_cap",
+      "archived": false,
+      "fields": []
+    }
+  ],
+  "templates": [],
+  "terms": [],
+  "settings": {
+    "riskDays": 3,
+    "riskProgress": 50,
+    "reminderDays": [
+      3,
+      1
+    ],
+    "categoryLabels": {
+      "todo": "Chờ làm",
+      "doing": "Đang làm",
+      "review": "Chờ duyệt",
+      "done": "Hoàn thành"
+    }
+  }
+}

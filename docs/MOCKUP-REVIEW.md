@@ -1,0 +1,2 @@
+# Đối chiếu mockup
+Mockup gốc lưu ở `design/` (tương tác bằng JS, dữ liệu mẫu). App dựng lại đủ 12 màn (6 cá nhân + 6 quản lý) với cùng token giao diện (#F7F8FA, thẻ 12px, #2563EB, màu trạng thái). Khác biệt có chủ đích: xem `docs/REQUIREMENTS.md` (bảng trạng thái). Dữ liệu mẫu của mockup **không** được đưa vào sản phẩm; chỉ danh mục loại việc/quy trình ví dụ làm cấu hình khởi tạo (`config/khoa.config.json`).

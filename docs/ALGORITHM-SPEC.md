@@ -1,0 +1,12 @@
+# Thuật toán & quy tắc (cài đặt: `src/domain`, có test trong `tests/domain`)
+- **Tiến độ việc** = số mục checklist xong / tổng (làm tròn); không checklist: xong=100, còn lại=0.
+- **Trạng thái hiển thị**: `late` nếu chưa xong và `dueAt < hôm nay` (đúng ngày hạn chưa quá hạn).
+- **Rủi ro** = quá hạn, hoặc còn ≤ `riskDays` (mặc định 3) ngày mà tiến độ < `riskProgress` (50%). Ngưỡng ở `settings/app`. Mockup nêu mặc định này; việc đã xong/không hạn không có rủi ro.
+- **Chuyển trạng thái**: hợp lệ nếu có bước `from>to` và người dùng thuộc ít nhất một `ActorKind` được phép (assignee, collaborator, reviewer, creator, approver [quyền duyệt trong đơn vị], approver_all [toàn Khoa], assigner). Bước `requiresComment` bắt buộc ý kiến. Vào nhóm *done* đặt `completedAt`; rời thì `null`.
+- **Phạm vi quyền**: `computeScopes`: vai trò × đơn vị gán → perm → {unit + đơn vị con}; gán ở gốc → `*`.
+- **Thống kê tuần (Tổng quan)** — *định nghĩa của dự án vì mockup không nêu công thức*: cohort = việc có hạn chót trong kỳ; `actual%(w)` = cohort có `completedAt ≤ cuối tuần w`; `plan%(w)` = cohort có `dueAt ≤ cuối tuần w`; "tạo mới/hoàn thành" đếm theo `createdAt/completedAt` trong tuần. Tuần bắt đầu thứ Hai.
+- **Tỉ lệ đúng hạn** = việc xong có `completedAt ≤ dueAt` (so theo ngày) / số việc xong.
+- **Giao hàng loạt**: `each` (mỗi người một việc), `shared` (người đầu phụ trách, còn lại phối hợp, đơn vị = tổ tiên chung thấp nhất), `unit` (mỗi đơn vị → Trưởng đơn vị). Người duyệt: Trưởng đơn vị (nếu người nhận là trưởng thì lên cấp trên), Trưởng khoa, hoặc không. Bỏ qua người chưa kích hoạt/không đơn vị (báo lý do). Tối đa 150 việc/lần; ID = `${bulkId}_${i}`.
+- **Việc lặp**: kỳ tới hạn trong 14 ngày gần nhất (tuần/tháng/học kỳ); ID `rec_<mẫu>_<kỳ>`.
+- **Lọc**: không phân biệt dấu/hoa thường (xử lý đ/Đ); lọc đơn vị gồm đơn vị con.
+- **CSV**: UTF-8 BOM; ô bắt đầu `= + - @` được tiền tố `'`.
