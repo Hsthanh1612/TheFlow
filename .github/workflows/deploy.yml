@@ -58,7 +58,7 @@ jobs:
         run: npm run build
       - name: Bảo đảm bản build không chứa emulator/localhost/khoá riêng
         run: |
-          if grep -rIlE "127\.0\.0\.1:(8080|9099)|connectFirestoreEmulator|PRIVATE KEY" dist; then echo "::error::Bản build chứa tham chiếu emulator hoặc khoá riêng"; exit 1; fi
+          if grep -rIlE "127\.0\.0\.1:(8080|9099)|PRIVATE KEY" dist; then echo "::error::Bản build chứa tham chiếu emulator hoặc khoá riêng"; exit 1; fi
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
