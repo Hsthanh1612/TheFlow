@@ -10,6 +10,7 @@ import { markRead } from '../services/firebase/notifyRepo';
 import { hasAnyScope, hasPerm } from '../domain/permissions';
 import { riskList } from '../domain/stats';
 import { vnDayMonth } from '../domain/dates';
+import { THEMES, setTheme, useTheme } from '../state/theme';
 
 function NavItem({ to, icon, children, badge, badgeClass }: { to: string; icon: string; children: ReactNode; badge?: number; badgeClass?: string }) {
   return (
@@ -82,6 +83,7 @@ function Topbar() {
   const [openMenu, setOpenMenu] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const unread = notifications.filter((n) => !n.readAt);
+  const theme = useTheme();
 
   useEffect(() => {
     const on = () => setOnline(true);
@@ -139,7 +141,7 @@ function Topbar() {
             </div>
           )}
         </div>
-        <button className="btn pri" onClick={() => form.open()}><Icon name="plus" size={16} />Tạo việc</button>
+        <button className="btn cta" onClick={() => form.open()}><Icon name="plus" size={16} />Tạo việc</button>
         <div className="rel">
           <button className="ib" style={{ borderRadius: '50%' }} aria-label={`Tài khoản ${profile?.name ?? ''}`} aria-haspopup="menu" aria-expanded={openMenu} onClick={() => setOpenMenu((v) => !v)}>
             <Avatar name={profile?.name ?? '?'} label={false} />
@@ -147,6 +149,14 @@ function Topbar() {
           {openMenu && (
             <div className="menu" style={{ width: 240 }}>
               <div style={{ padding: '8px 0' }}><strong>{profile?.name}</strong><div className="note">{profile?.email}</div></div>
+              <div className="themes" role="group" aria-label="Màu giao diện">
+                <span className="note">Màu giao diện</span>
+                <div className="row" style={{ gap: 8 }}>
+                  {THEMES.map((t) => (
+                    <button key={t.id} type="button" className={`sw-btn${theme === t.id ? ' on' : ''}`} aria-label={t.name} aria-pressed={theme === t.id} title={t.name} onClick={() => setTheme(t.id)} style={{ background: `linear-gradient(135deg, ${t.swatch[0]} 50%, ${t.swatch[1]} 50%)` }} />
+                  ))}
+                </div>
+              </div>
               <button className="btn" style={{ width: '100%' }} onClick={() => void signOut()}>Đăng xuất</button>
             </div>
           )}

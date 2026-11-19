@@ -5,6 +5,9 @@ import './styles/app.css';
 import { App } from './App';
 import { AuthProvider } from './state/auth';
 import { ToastProvider } from './state/toast';
+import { initTheme } from './state/theme';
+
+initTheme();
 
 // HashRouter: GitHub Pages không có rewrite phía máy chủ nên không dùng đường dẫn lịch sử.
 createRoot(document.getElementById('root')!).render(

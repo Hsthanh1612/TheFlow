@@ -55,7 +55,7 @@ export function toUser(uid: string, d: DocumentData): UserProfile {
 }
 
 export function toUnit(id: string, d: DocumentData): OrgUnit {
-  return { id, parentId: typeof d.parentId === 'string' ? d.parentId : null, name: str(d.name, id), kind: d.kind === 'khoa' || d.kind === 'to' ? d.kind : 'bomon', color: str(d.color, '#2D4A87'), headId: typeof d.headId === 'string' ? d.headId : null, archived: d.archived === true };
+  return { id, parentId: typeof d.parentId === 'string' ? d.parentId : null, name: str(d.name, id), kind: d.kind === 'khoa' || d.kind === 'to' ? d.kind : 'bomon', color: str(d.color, '#2F6BE0'), headId: typeof d.headId === 'string' ? d.headId : null, archived: d.archived === true };
 }
 
 export function toRole(key: string, d: DocumentData): Role {
@@ -67,7 +67,7 @@ export function toWorkflow(id: string, d: DocumentData): Workflow {
 }
 
 export function toTaskType(id: string, d: DocumentData): TaskType {
-  return { id, name: str(d.name, id), color: str(d.color, '#2D4A87'), workflowId: str(d.workflowId), fields: arr(d.fields), archived: d.archived === true };
+  return { id, name: str(d.name, id), color: str(d.color, '#2F6BE0'), workflowId: str(d.workflowId), fields: arr(d.fields), archived: d.archived === true };
 }
 
 export function toTemplate(id: string, d: DocumentData): TaskTemplate {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { initials } from '../state/data';
 import type { DisplayStatus } from '../domain/taskLogic';
 
@@ -61,6 +61,24 @@ export function ProgressBar({ pct }: { pct: number }) {
       <i style={{ width: `${pct}%` }} />
     </div>
   );
+}
+
+/** Số đếm tăng dần khi xuất hiện (bỏ qua khi người dùng tắt hiệu ứng). */
+export function CountUp({ value }: { value: number }) {
+  const [shown, setShown] = useState(value);
+  useEffect(() => {
+    if (value <= 0 || matchMedia('(prefers-reduced-motion: reduce)').matches) { setShown(value); return; }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      const k = Math.min((now - t0) / 700, 1);
+      setShown(Math.round(value * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <>{shown}</>;
 }
 
 export function Loading({ text = 'Đang tải…' }: { text?: string }) {

@@ -6,7 +6,7 @@
       "parentId": null,
       "name": "Khoa",
       "kind": "khoa",
-      "color": "#2D4A87",
+      "color": "#2F6BE0",
       "headId": null,
       "archived": false
     }
@@ -448,7 +448,7 @@
     {
       "id": "bao_cao",
       "name": "Báo cáo",
-      "color": "#2D4A87",
+      "color": "#2F6BE0",
       "workflowId": "duyet_2_cap",
       "archived": false,
       "fields": [
@@ -497,7 +497,7 @@
     {
       "id": "de_thi",
       "name": "Đề thi",
-      "color": "#B4530A",
+      "color": "#F5A524",
       "workflowId": "duyet_1_cap",
       "archived": false,
       "fields": [
@@ -515,7 +515,7 @@
     {
       "id": "hop",
       "name": "Họp",
-      "color": "#7A5C9E",
+      "color": "#9B4DFF",
       "workflowId": "khong_duyet",
       "archived": false,
       "fields": [
@@ -533,7 +533,7 @@
     {
       "id": "coi_thi",
       "name": "Coi thi",
-      "color": "#2F7D77",
+      "color": "#0FB5AE",
       "workflowId": "khong_duyet",
       "archived": false,
       "fields": []
@@ -541,7 +541,7 @@
     {
       "id": "nckh",
       "name": "NCKH",
-      "color": "#4A7A3C",
+      "color": "#1E8A55",
       "workflowId": "duyet_1_cap",
       "archived": false,
       "fields": []
@@ -549,7 +549,7 @@
     {
       "id": "tuyen_sinh",
       "name": "Tuyển sinh",
-      "color": "#B5476B",
+      "color": "#EC4899",
       "workflowId": "duyet_1_cap",
       "archived": false,
       "fields": []
@@ -557,7 +557,7 @@
     {
       "id": "giao_vu",
       "name": "Giáo vụ",
-      "color": "#6B7388",
+      "color": "#8A93AB",
       "workflowId": "duyet_1_cap",
       "archived": false,
       "fields": []
@@ -565,7 +565,7 @@
     {
       "id": "chuong_trinh",
       "name": "Chương trình đào tạo",
-      "color": "#24386B",
+      "color": "#5B4BF5",
       "workflowId": "duyet_1_cap",
       "archived": false,
       "fields": []

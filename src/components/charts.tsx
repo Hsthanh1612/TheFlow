@@ -26,7 +26,7 @@ export function LineChart({ labels, series, max = 100, unit = '%' }: { labels: s
       <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {ticks.map((t) => (
           <g key={t}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#E2D7BE" />
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#E3E6EE" />
             <text x={PAD.l - 6} y={y(t) + 4} textAnchor="end">{t}{unit}</text>
           </g>
         ))}
@@ -63,7 +63,7 @@ export function ColumnChart({ labels, series }: { labels: string[]; series: Seri
       <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {[0, max / 2, max].map((t) => (
           <g key={t}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#E2D7BE" />
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#E3E6EE" />
             <text x={PAD.l - 6} y={y(t) + 4} textAnchor="end">{Math.round(t)}</text>
           </g>
         ))}

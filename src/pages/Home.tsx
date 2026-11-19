@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Loading, PageHead, ErrorBox } from '../components/ui';
+import { CountUp, Loading, PageHead, ErrorBox } from '../components/ui';
 import { DueText, ProgressCell, TaskLinkTitle, TaskStatus, TypeTag, useTaskView } from '../components/taskBits';
 import { useAuth } from '../state/auth';
 import { hasPerm } from '../domain/permissions';
@@ -31,10 +31,10 @@ export function HomePage() {
       <PageHead title={`Xin chào, ${firstName}`} sub={`${dow}, ${vnDate(v.today)} · Dưới đây là việc cần chú ý của bạn.`} actions={<Link className="btn" to="/tasks/kanban">Xem bảng Kanban</Link>} />
       <ErrorBox errors={v.errors} />
       <div className="g4">
-        <div className="card stat"><span>Đang làm</span><b>{doing}</b><small className="note">việc đang thực hiện</small></div>
-        <div className="card stat"><span>Sắp đến hạn ({v.settings.riskDays} ngày)</span><b>{soon.length}</b><small className="note">cần hoàn thành sớm</small></div>
-        <div className="card stat"><span>Quá hạn</span><b className={late.length ? 'red' : ''}>{late.length}</b><small className="note">cần xử lý ngay</small></div>
-        <div className="card stat"><span>Chờ tôi duyệt</span><b>{toReview.length}</b><small className="note">việc đang chờ phê duyệt</small></div>
+        <div className="card stat"><span>Đang làm</span><b><CountUp value={doing} /></b><small className="note">việc đang thực hiện</small></div>
+        <div className="card stat"><span>Sắp đến hạn ({v.settings.riskDays} ngày)</span><b><CountUp value={soon.length} /></b><small className="note">cần hoàn thành sớm</small></div>
+        <div className="card stat"><span>Quá hạn</span><b className={late.length ? 'red' : ''}><CountUp value={late.length} /></b><small className="note">cần xử lý ngay</small></div>
+        <div className="card stat"><span>Chờ tôi duyệt</span><b><CountUp value={toReview.length} /></b><small className="note">việc đang chờ phê duyệt</small></div>
       </div>
       <div className="g21">
         <div className="card">

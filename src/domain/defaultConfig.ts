@@ -60,7 +60,7 @@ export function defaultConfig(): KhoaConfig {
   ];
   return {
     version: 1,
-    units: [{ id: 'khoa', parentId: null, name: 'Khoa', kind: 'khoa', color: '#2D4A87', headId: null, archived: false }],
+    units: [{ id: 'khoa', parentId: null, name: 'Khoa', kind: 'khoa', color: '#2F6BE0', headId: null, archived: false }],
     roles: [
       { key: 'quan_tri', name: 'Quản trị', permissions: ['task.view_all', 'task.assign', 'task.bulk_assign', 'task.approve', 'task.reassign', 'task.extend', 'manage.view', 'report.export', 'config.edit', 'user.manage'], archived: false },
       { key: 'truong_khoa', name: 'Trưởng khoa', permissions: ['task.view_all', 'task.assign', 'task.bulk_assign', 'task.approve', 'task.reassign', 'task.extend', 'manage.view', 'report.export', 'config.edit'], archived: false },
@@ -70,19 +70,19 @@ export function defaultConfig(): KhoaConfig {
     ],
     workflows,
     taskTypes: [
-      { id: 'bao_cao', name: 'Báo cáo', color: '#2D4A87', workflowId: 'duyet_2_cap', archived: false, fields: [
+      { id: 'bao_cao', name: 'Báo cáo', color: '#2F6BE0', workflowId: 'duyet_2_cap', archived: false, fields: [
         f('hoc_ky', 'Học kỳ', 'select', { required: true, options: ['HK1', 'HK2', 'HK hè'] }, 1),
         f('don_vi_nop', 'Đơn vị nộp', 'text', {}, 2),
         f('so_trang_toi_da', 'Số trang tối đa', 'number', {}, 3),
         f('tep_bieu_mau', 'Tệp biểu mẫu', 'file', {}, 4),
       ] },
-      { id: 'de_thi', name: 'Đề thi', color: '#B4530A', workflowId: 'duyet_1_cap', archived: false, fields: [f('hoc_phan', 'Học phần', 'text', { required: true }, 1)] },
-      { id: 'hop', name: 'Họp', color: '#7A5C9E', workflowId: 'khong_duyet', archived: false, fields: [f('dia_diem', 'Địa điểm', 'text', {}, 1)] },
-      { id: 'coi_thi', name: 'Coi thi', color: '#2F7D77', workflowId: 'khong_duyet', archived: false, fields: [] },
-      { id: 'nckh', name: 'NCKH', color: '#4A7A3C', workflowId: 'duyet_1_cap', archived: false, fields: [] },
-      { id: 'tuyen_sinh', name: 'Tuyển sinh', color: '#B5476B', workflowId: 'duyet_1_cap', archived: false, fields: [] },
-      { id: 'giao_vu', name: 'Giáo vụ', color: '#6B7388', workflowId: 'duyet_1_cap', archived: false, fields: [] },
-      { id: 'chuong_trinh', name: 'Chương trình đào tạo', color: '#24386B', workflowId: 'duyet_1_cap', archived: false, fields: [] },
+      { id: 'de_thi', name: 'Đề thi', color: '#F5A524', workflowId: 'duyet_1_cap', archived: false, fields: [f('hoc_phan', 'Học phần', 'text', { required: true }, 1)] },
+      { id: 'hop', name: 'Họp', color: '#9B4DFF', workflowId: 'khong_duyet', archived: false, fields: [f('dia_diem', 'Địa điểm', 'text', {}, 1)] },
+      { id: 'coi_thi', name: 'Coi thi', color: '#0FB5AE', workflowId: 'khong_duyet', archived: false, fields: [] },
+      { id: 'nckh', name: 'NCKH', color: '#1E8A55', workflowId: 'duyet_1_cap', archived: false, fields: [] },
+      { id: 'tuyen_sinh', name: 'Tuyển sinh', color: '#EC4899', workflowId: 'duyet_1_cap', archived: false, fields: [] },
+      { id: 'giao_vu', name: 'Giáo vụ', color: '#8A93AB', workflowId: 'duyet_1_cap', archived: false, fields: [] },
+      { id: 'chuong_trinh', name: 'Chương trình đào tạo', color: '#5B4BF5', workflowId: 'duyet_1_cap', archived: false, fields: [] },
     ],
     templates: [],
     terms: [],
