@@ -17,7 +17,7 @@ export function UnitsTab() {
   async function add() {
     const parent = parentId || d.units.find((u) => u.parentId === null)?.id || null;
     const id = slug(name);
-    const unit: OrgUnit = { id, parentId: parent, name: name.trim(), kind, color: '#2a78d6', headId: null, archived: false };
+    const unit: OrgUnit = { id, parentId: parent, name: name.trim(), kind, color: '#2D4A87', headId: null, archived: false };
     const r = unitSchema.safeParse(unit);
     if (!r.success) return setErr(r.error.issues.map((i) => i.message).join(' '));
     if (d.units.some((u) => u.id === id)) return setErr('Đã có đơn vị trùng tên/khoá.');

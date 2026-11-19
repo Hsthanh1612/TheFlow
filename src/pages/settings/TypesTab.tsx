@@ -6,7 +6,7 @@ import { typeSchema } from '../../domain/config';
 import { FIELD_TYPE_LABELS } from '../../domain/fields';
 import type { FieldDef, FieldType, TaskType } from '../../domain/types';
 
-const BLANK = (): TaskType => ({ id: '', name: '', color: '#2563EB', workflowId: '', fields: [], archived: false });
+const BLANK = (): TaskType => ({ id: '', name: '', color: '#2D4A87', workflowId: '', fields: [], archived: false });
 
 export function TypesTab() {
   const d = useData();

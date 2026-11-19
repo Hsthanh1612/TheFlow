@@ -8,7 +8,7 @@ import { breakdown, pct, riskList, weeklySeries } from '../../domain/stats';
 import { descendantIds } from '../../domain/permissions';
 import { diffDays, vnDate, vnDayMonth, weekStart } from '../../domain/dates';
 
-const COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#7b5cd6', '#c2417c'];
+const COLORS = ['#2D4A87', '#E8761E', '#4A7A3C', '#C99A2E', '#7A5C9E', '#B5476B'];
 
 export function OverviewPage() {
   const v = useTaskView();
@@ -30,7 +30,7 @@ export function OverviewPage() {
   const labels = all.map((p) => vnDayMonth(p.week));
   const lines = [
     ...perUnit.map((u) => ({ name: u.unit.name, color: u.color, values: u.series.map((p) => p.actualPct) })),
-    { name: 'Kế hoạch', color: '#6B7280', values: all.map((p) => p.planPct), dashed: true },
+    { name: 'Kế hoạch', color: '#77809A', values: all.map((p) => p.planPct), dashed: true },
   ];
 
   return (
@@ -52,13 +52,13 @@ export function OverviewPage() {
         </div>
         <div className="card">
           <h3>Tiến độ từng đơn vị <Link to="/manage/units">Chi tiết</Link></h3>
-          <Legend items={[{ name: 'Hoàn thành', color: '#15803D' }, { name: 'Đang làm', color: '#2563EB' }, { name: 'Chờ duyệt', color: '#B45309' }, { name: 'Quá hạn', color: '#B42318' }]} />
+          <Legend items={[{ name: 'Hoàn thành', color: '#4A7A3C' }, { name: 'Đang làm', color: '#2D4A87' }, { name: 'Chờ duyệt', color: '#B4530A' }, { name: 'Quá hạn', color: '#B3261E' }]} />
           <div className="ub">
             {perUnit.map((u) => (
               <div className="u-row" key={u.unit.id}>
                 <span>{u.unit.name}</span>
                 <div className="stack" role="img" aria-label={`${u.unit.name}: ${u.bd.done} xong, ${u.bd.doing} đang làm, ${u.bd.review} chờ duyệt, ${u.bd.late} quá hạn`}>
-                  {[['#15803D', u.bd.done], ['#2563EB', u.bd.doing], ['#B45309', u.bd.review], ['#B42318', u.bd.late]].map(([c, n], i) => <i key={i} style={{ background: c as string, width: `${pct(n as number, Math.max(u.bd.total - u.bd.todo, 1))}%` }} />)}
+                  {[['#4A7A3C', u.bd.done], ['#2D4A87', u.bd.doing], ['#B4530A', u.bd.review], ['#B3261E', u.bd.late]].map(([c, n], i) => <i key={i} style={{ background: c as string, width: `${pct(n as number, Math.max(u.bd.total - u.bd.todo, 1))}%` }} />)}
                 </div>
                 <b>{pct(u.bd.done, u.bd.total)}%</b>
               </div>
@@ -69,8 +69,8 @@ export function OverviewPage() {
       <div className="g21">
         <div className="card">
           <h3>Số việc tạo mới và hoàn thành mỗi tuần</h3>
-          <Legend items={[{ name: 'Hoàn thành', color: '#15803D' }, { name: 'Tạo mới', color: '#93C5FD' }]} />
-          <ColumnChart labels={labels} series={[{ name: 'Hoàn thành', color: '#15803D', values: all.map((p) => p.done) }, { name: 'Tạo mới', color: '#93C5FD', values: all.map((p) => p.created) }]} />
+          <Legend items={[{ name: 'Hoàn thành', color: '#4A7A3C' }, { name: 'Tạo mới', color: '#9DB0D8' }]} />
+          <ColumnChart labels={labels} series={[{ name: 'Hoàn thành', color: '#4A7A3C', values: all.map((p) => p.done) }, { name: 'Tạo mới', color: '#9DB0D8', values: all.map((p) => p.created) }]} />
         </div>
         <div className="card">
           <h3>Cần chú ý <Link to="/manage/risks">Xem tất cả</Link></h3>

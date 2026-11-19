@@ -56,7 +56,7 @@ function Group({ name, list, show, status }: { name: string; list: Row[]; show: 
   const v = useTaskView();
   return (
     <>
-      {show && <div role="row" style={{ gridColumn: `1 / ${WEEKS + 2}`, padding: '6px 10px', background: '#F9FAFB', fontWeight: 600, fontSize: 12, borderBottom: '1px solid var(--line)' }}>{name}</div>}
+      {show && <div role="row" style={{ gridColumn: `1 / ${WEEKS + 2}`, padding: '6px 10px', background: 'var(--cream-sunk-2)', fontWeight: 600, fontSize: 12, borderBottom: '1px solid var(--line)' }}>{name}</div>}
       {list.map(({ t, span }) => {
         const s = status(t);
         const pct = v.progress(t);

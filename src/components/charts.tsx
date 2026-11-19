@@ -26,7 +26,7 @@ export function LineChart({ labels, series, max = 100, unit = '%' }: { labels: s
       <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {ticks.map((t) => (
           <g key={t}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#E5E7EB" />
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#E2D7BE" />
             <text x={PAD.l - 6} y={y(t) + 4} textAnchor="end">{t}{unit}</text>
           </g>
         ))}
@@ -34,7 +34,7 @@ export function LineChart({ labels, series, max = 100, unit = '%' }: { labels: s
         {series.map((s) => (
           <polyline key={s.name} fill="none" stroke={s.color} strokeWidth="2.5" strokeDasharray={s.dashed ? '6 5' : undefined} strokeLinejoin="round" points={s.values.map((v, i) => `${scaleX(i, labels.length)},${y(v)}`).join(' ')} />
         ))}
-        {hover !== null && <line x1={scaleX(hover, labels.length)} x2={scaleX(hover, labels.length)} y1={PAD.t} y2={H - PAD.b} stroke="#9CA3AF" strokeDasharray="3 3" />}
+        {hover !== null && <line x1={scaleX(hover, labels.length)} x2={scaleX(hover, labels.length)} y1={PAD.t} y2={H - PAD.b} stroke="#9AA1B5" strokeDasharray="3 3" />}
         {labels.map((l, i) => (
           <rect key={l} x={scaleX(i, labels.length) - (W - PAD.l - PAD.r) / Math.max(labels.length - 1, 1) / 2} y={PAD.t} width={(W - PAD.l - PAD.r) / Math.max(labels.length - 1, 1)} height={H - PAD.t - PAD.b} fill="transparent" onMouseEnter={() => setHover(i)} />
         ))}
@@ -63,7 +63,7 @@ export function ColumnChart({ labels, series }: { labels: string[]; series: Seri
       <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" onMouseLeave={() => setHover(null)}>
         {[0, max / 2, max].map((t) => (
           <g key={t}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#E5E7EB" />
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#E2D7BE" />
             <text x={PAD.l - 6} y={y(t) + 4} textAnchor="end">{Math.round(t)}</text>
           </g>
         ))}
