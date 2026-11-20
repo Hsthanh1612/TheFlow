@@ -257,6 +257,17 @@ test('13. responsive điện thoại: không tràn ngang trên các màn chính;
   await m.ctx.close();
 });
 
+test('13b. đăng nhập bằng tên tài khoản (không cần email) và báo lỗi rõ khi sai định dạng', async ({ browser }) => {
+  const s = await openSession(browser);
+  await login(s.page, 'dung'); // tên tài khoản = phần trước @ của dung@khoa.test
+  await expectHome(s.page, ADMIN.name);
+  await s.ctx.close();
+  const bad = await openSession(browser);
+  await login(bad.page, 'a b');
+  await expect(bad.page.getByRole('alert')).toContainText('Tài khoản gồm 3–30 ký tự');
+  await bad.ctx.close();
+});
+
 test('14. không có lỗi console / trang / request nghiêm trọng trong toàn bộ kịch bản', async () => {
   const all = [...admin.errors, ...an.errors];
   expect(all, all.join('\n')).toEqual([]);

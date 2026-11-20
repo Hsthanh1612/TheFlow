@@ -6,6 +6,17 @@ import { classify } from '../errors';
 import { defaultConfig } from '../../domain/defaultConfig';
 import { computeScopes } from '../../domain/permissions';
 import { seedConfigBatch } from './configRepo';
+import { toLoginEmail } from '../../domain/login';
+import { AppError } from '../errors';
+
+/** Miền email nội bộ cho tài khoản dạng tên đăng nhập; đổi bằng VITE_USERNAME_DOMAIN khi build. */
+const USERNAME_DOMAIN = (import.meta.env.VITE_USERNAME_DOMAIN as string | undefined) || 'khoa.test';
+
+function loginEmail(input: string): string {
+  const r = toLoginEmail(input, USERNAME_DOMAIN);
+  if (!r.ok) throw new AppError('auth', r.reason);
+  return r.email;
+}
 
 let signUpInFlight = false;
 /** true khi đang đăng ký bằng email: AuthProvider không tự tạo hồ sơ (tránh ghi hồ sơ với tên mặc định trước khi có họ tên). */
@@ -15,7 +26,7 @@ export async function signUp(email: string, password: string, name: string): Pro
   const { auth } = getServices();
   signUpInFlight = true;
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    const cred = await createUserWithEmailAndPassword(auth, loginEmail(email), password);
     await ensureProfile(cred.user, name);
   } catch (e) {
     throw classify(e);
@@ -26,7 +37,7 @@ export async function signUp(email: string, password: string, name: string): Pro
 
 export async function signIn(email: string, password: string): Promise<void> {
   try {
-    await signInWithEmailAndPassword(getServices().auth, email.trim(), password);
+    await signInWithEmailAndPassword(getServices().auth, loginEmail(email), password);
   } catch (e) {
     throw classify(e);
   }
@@ -42,7 +53,10 @@ export async function signInGoogle(): Promise<void> {
 
 export async function resetPassword(email: string): Promise<void> {
   try {
-    await sendPasswordResetEmail(getServices().auth, email.trim());
+    const r = toLoginEmail(email, USERNAME_DOMAIN);
+    if (!r.ok) throw new AppError('auth', r.reason);
+    if (r.isUsername) throw new AppError('auth', 'Tài khoản dạng tên đăng nhập không có hộp thư để gửi liên kết. Hãy nhập email, hoặc nhờ quản trị viên đặt lại mật khẩu.');
+    await sendPasswordResetEmail(getServices().auth, r.email);
   } catch (e) {
     throw classify(e);
   }

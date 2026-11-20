@@ -56,8 +56,8 @@ export function LoginPage() {
             <input id="name" className="inp" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required />
           </Field>
         )}
-        <Field label="Email" htmlFor="email">
-          <input id="email" type="email" className="inp" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
+        <Field label={mode === 'reset' ? 'Email' : 'Tài khoản hoặc email'} htmlFor="email" hint={mode === 'in' ? 'Nhập tên tài khoản (ví dụ test_case) hoặc địa chỉ Gmail.' : undefined}>
+          <input id="email" type={mode === 'reset' ? 'email' : 'text'} inputMode={mode === 'reset' ? 'email' : undefined} className="inp" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete={mode === 'in' ? 'username' : 'email'} autoCapitalize="none" spellCheck={false} required />
         </Field>
         {mode !== 'reset' && (
           <Field label="Mật khẩu" htmlFor="pw" hint={mode === 'up' ? 'Tối thiểu 6 ký tự.' : undefined}>
