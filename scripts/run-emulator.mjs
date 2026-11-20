@@ -16,7 +16,12 @@ const bin = resolve(root, 'node_modules/.bin/firebase');
 const PROJECT = 'demo-khoa'; // tiền tố demo- => emulator không bao giờ nối vào project thật
 
 let args;
-if (argv[0] === 'emulators-only') args = ['emulators:start', '--only', 'auth,firestore', '--project', PROJECT];
+if (argv[0] === 'emulators-only') {
+  // Dữ liệu thử được giữ lại giữa các lần chạy trong .emulator-data (đã gitignore): nạp khi khởi động, ghi lại khi thoát bằng Ctrl+C.
+  const dataDir = resolve(root, '.emulator-data');
+  args = ['emulators:start', '--only', 'auth,firestore', '--project', PROJECT, '--export-on-exit', dataDir];
+  if (existsSync(resolve(dataDir, 'firebase-export-metadata.json'))) args.push('--import', dataDir);
+}
 else if (argv.length > 0) {
   const cmd = (argv[0] === 'exec' ? argv.slice(1) : argv).join(' ');
   args = ['emulators:exec', '--only', 'auth,firestore', '--project', PROJECT, cmd];
