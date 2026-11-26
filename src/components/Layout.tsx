@@ -14,6 +14,7 @@ import { applyMode, applyTheme, isModeId, isThemeId } from '../state/theme';
 import { CommandPalette } from './CommandPalette';
 import { TimerChip } from './TimerChip';
 import { ThemePicker } from './ThemePicker';
+import { ModeToggle } from './ModeToggle';
 
 function NavItem({ to, icon, children, badge, badgeClass }: { to: string; icon: string; children: ReactNode; badge?: number; badgeClass?: string }) {
   return (
@@ -131,6 +132,7 @@ function Topbar() {
       {palette && <CommandPalette onClose={() => setPalette(false)} />}
       <div className="tr">
         <TimerChip />
+        <ModeToggle />
         <span className={`sync${online && toast.pending === 0 ? '' : ' warn'}`} role="status">
           {!online ? 'Mất kết nối — chưa đồng bộ' : toast.pending > 0 ? 'Đang gửi lên máy chủ…' : 'Đã đồng bộ'}
         </span>

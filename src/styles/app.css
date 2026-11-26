@@ -532,3 +532,17 @@ i.sw.wl-ok { background: #7ED6A1; } i.sw.wl-high { background: #F5C15A; } i.sw.w
 :root[data-mode='dark'] .auth .card { background: var(--glass-hi); }
 :root[data-mode='dark'] .av { color: var(--accent-ink); background: linear-gradient(135deg, var(--p-soft), color-mix(in srgb, var(--a) 26%, var(--bg))); }
 .u-row b { white-space: nowrap; }
+
+/* Nút gạt sáng/tối */
+.modetog { position: relative; width: 52px; height: 28px; flex: none; border-radius: 999px; border: 2px solid var(--edge); background: linear-gradient(160deg, #fff6d6, #cfe6ff); cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: space-between; padding-inline: 6px; color: #b7791f; transition: background .45s var(--ease), border-color .3s; }
+.modetog .mt-moon { color: #9aa6d6; }
+.modetog .mt-sun { color: #e0a100; }
+.modetog .mt-knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .3); transition: transform .45s cubic-bezier(.34, 1.56, .64, 1), background .3s; }
+.modetog.dark { background: linear-gradient(160deg, #1b2347, #0b1022); }
+.modetog.dark .mt-knob { transform: translateX(24px); background: #e9edff; }
+.modetog:hover .mt-knob { box-shadow: 0 1px 8px rgba(0, 0, 0, .4); }
+.modetog:focus-visible { outline: 2px solid var(--p); outline-offset: 2px; }
+.modetog svg { position: relative; z-index: 1; transition: transform .45s var(--ease), opacity .3s; }
+.modetog:not(.dark) .mt-moon, .modetog.dark .mt-sun { opacity: .35; }
+.modetog.dark .mt-moon { transform: rotate(-20deg) scale(1.1); }
+@media (prefers-reduced-motion: reduce) { .modetog, .modetog .mt-knob, .modetog svg { transition: none; } }
