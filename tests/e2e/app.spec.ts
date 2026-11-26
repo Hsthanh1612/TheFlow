@@ -180,10 +180,10 @@ test('8. kanban kéo thả đổi trạng thái theo quy trình; lịch và time
   await expect(p.getByRole('row', { name: /Họp bộ môn tháng 11/ })).toBeVisible();
 });
 
-test('9. giao việc hàng loạt trong một lần ghi; xem trước đúng; không giao trùng', async () => {
+test('9. giao công việc trong một lần ghi; xem trước đúng; không giao trùng', async () => {
   const p = admin.page;
-  await p.getByRole('link', { name: 'Giao việc hàng loạt' }).click();
-  await expect(p.getByRole('heading', { name: 'Giao việc hàng loạt' })).toBeVisible();
+  await p.getByRole('link', { name: 'Giao công việc' }).click();
+  await expect(p.getByRole('heading', { name: 'Giao công việc' })).toBeVisible();
   await expect(p.getByLabel('Tạo từ mẫu việc')).toBeVisible(); // trang đã dựng xong
   await p.getByLabel('Loại việc').selectOption({ label: 'Họp' });
   await p.getByLabel('Tiêu đề').fill('Họp toàn Khoa cuối kỳ');
@@ -197,13 +197,30 @@ test('9. giao việc hàng loạt trong một lần ghi; xem trước đúng; kh
   await expect(an.page.getByRole('link', { name: 'Họp toàn Khoa cuối kỳ' }).first()).toBeVisible();
 });
 
+test('9b. tạo lời nhắc có nội dung gửi tới người được giao; người nhận thấy trong Thông báo', async () => {
+  const p = admin.page;
+  await p.goto('/#/tasks/list');
+  await p.getByRole('link', { name: 'Họp toàn Khoa cuối kỳ' }).first().click();
+  await p.getByRole('button', { name: 'Tạo lời nhắc' }).click();
+  const dlg = p.getByRole('dialog');
+  await expect(dlg.getByLabel(new RegExp(LECT.name))).toBeChecked(); // người phụ trách được chọn sẵn
+  await dlg.getByRole('button', { name: 'Gửi lời nhắc' }).click();
+  await expect(dlg.getByText('Hãy viết nội dung lời nhắc.')).toBeVisible(); // bắt buộc có nội dung
+  await dlg.getByLabel('Nội dung lời nhắc').fill('Anh gửi bản chương trình họp trước thứ Sáu nhé.');
+  await dlg.getByRole('button', { name: 'Gửi lời nhắc' }).click();
+  await expect(p.getByText('Đã gửi lời nhắc.')).toBeVisible();
+  await an.page.goto('/#/');
+  await an.page.getByRole('button', { name: /Thông báo/ }).click();
+  await expect(an.page.getByRole('dialog', { name: 'Thông báo' }).getByText(/nhắc bạn “Họp toàn Khoa cuối kỳ”: Anh gửi bản chương trình họp trước thứ Sáu nhé\./)).toBeVisible();
+});
+
 test('10. tổng quan, rủi ro, tiến độ đơn vị, báo cáo hiển thị dữ liệu thật', async () => {
   const p = admin.page;
   await p.getByRole('link', { name: 'Tổng quan' }).click();
   await expect(p.getByRole('heading', { level: 1 })).toContainText('Tổng quan');
   await expect(p.getByText('% hoàn thành so với kế hoạch')).toBeVisible();
-  await p.getByRole('link', { name: /Rủi ro/ }).click();
-  await expect(p.getByRole('heading', { name: /Rủi ro/ })).toBeVisible();
+  await p.getByRole('link', { name: /Cảnh báo quá hạn/ }).click();
+  await expect(p.getByRole('heading', { name: /Cảnh báo quá hạn/ })).toBeVisible();
   await p.getByRole('link', { name: 'Tiến độ đơn vị' }).click();
   await expect(p.getByText('Thành viên —')).toBeVisible();
   await p.getByRole('link', { name: /Báo cáo/ }).click();

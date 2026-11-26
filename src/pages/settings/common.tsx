@@ -5,7 +5,7 @@ import { saveConfigItem, saveSettings, syncScopes } from '../../services/firebas
 import type { KhoaConfig } from '../../domain/config';
 
 export const PERM_LABELS: Record<string, string> = {
-  'task.view_all': 'Xem việc của đơn vị', 'task.assign': 'Giao/sửa việc', 'task.bulk_assign': 'Giao việc hàng loạt', 'task.approve': 'Duyệt',
+  'task.view_all': 'Xem việc của đơn vị', 'task.assign': 'Giao/sửa việc', 'task.bulk_assign': 'Giao công việc', 'task.approve': 'Duyệt',
   'task.reassign': 'Đổi người phụ trách', 'task.extend': 'Gia hạn', 'manage.view': 'Xem khu vực Quản lý', 'report.export': 'Xuất báo cáo', 'config.edit': 'Sửa cấu hình', 'user.manage': 'Quản lý người dùng',
 };
 

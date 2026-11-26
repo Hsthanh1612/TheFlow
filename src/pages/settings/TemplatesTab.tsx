@@ -49,7 +49,7 @@ export function TemplatesTab() {
           <Field label="Hạn = ngày giao + (ngày)" htmlFor="tp-off"><input id="tp-off" type="number" min={0} max={366} className="inp" value={t.dueOffsetDays} onChange={(e) => setT({ ...t, dueOffsetDays: Number(e.target.value) })} /></Field>
         </div>
         <Field label="Checklist mẫu (mỗi dòng một mục)" htmlFor="tp-ck"><textarea id="tp-ck" className="inp" value={t.checklist.join('\n')} onChange={(e) => setT({ ...t, checklist: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 50) })} /></Field>
-        <Field label="Lặp lại" htmlFor="tp-rec" hint="Khi đến kỳ, mục “Giao việc hàng loạt” sẽ nhắc bạn giao việc của kỳ đó (hệ thống không tự chạy nền vì chỉ dùng gói Spark).">
+        <Field label="Lặp lại" htmlFor="tp-rec" hint="Khi đến kỳ, mục “Giao công việc” sẽ nhắc bạn giao việc của kỳ đó (hệ thống không tự chạy nền vì chỉ dùng gói Spark).">
           <select id="tp-rec" className="inp" value={t.recurrence?.kind ?? ''} onChange={(e) => setT({ ...t, recurrence: e.target.value ? ({ kind: e.target.value, active: true } as Recurrence) : null })}>
             <option value="">Không lặp</option>{Object.entries(REC).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
           </select>

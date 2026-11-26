@@ -35,7 +35,7 @@ export function GeneralTab() {
       <div className="card col">
         <h3>Thiết lập chung</h3>
         <div className="g2">
-          <Field label="Rủi ro: còn ≤ (ngày)" htmlFor="gs-days"><input id="gs-days" type="number" min={0} max={60} className="inp" value={s.riskDays} onChange={(e) => setS({ ...s, riskDays: Number(e.target.value) })} /></Field>
+          <Field label="Cảnh báo: còn ≤ (ngày)" htmlFor="gs-days"><input id="gs-days" type="number" min={0} max={60} className="inp" value={s.riskDays} onChange={(e) => setS({ ...s, riskDays: Number(e.target.value) })} /></Field>
           <Field label="… mà tiến độ dưới (%)" htmlFor="gs-prog"><input id="gs-prog" type="number" min={0} max={100} className="inp" value={s.riskProgress} onChange={(e) => setS({ ...s, riskProgress: Number(e.target.value) })} /></Field>
           <Field label="Nhắc trước hạn (ngày, cách nhau bằng dấu phẩy)" htmlFor="gs-rem" hint="Thông báo nhắc hạn xuất hiện trong ứng dụng khi người dùng mở app.">
             <input id="gs-rem" className="inp" value={rem} onChange={(e) => setRem(e.target.value)} />

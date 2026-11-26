@@ -11,7 +11,7 @@ Nguồn: `design/QuanLyCongViecKhoa-mockup.html`, `design/QuanLyCongViecKhoa-qua
 | Timeline (8 tuần, tuần hiện tại, nhóm theo) | Đã đáp ứng; kéo đổi ngày & phụ thuộc: *giai đoạn sau theo BRIEF* |
 | Chi tiết việc (checklist, bình luận @, thuộc tính, trường động, quy trình, nhật ký) | Đã đáp ứng; **đính kèm = liên kết** |
 | Cấu hình (6 tab + AI) | Đã đáp ứng (thêm Người dùng, Thiết lập chung, Lịch sử) |
-| Quản lý: Tổng quan, Chờ duyệt, Giao hàng loạt, Rủi ro, Tiến độ đơn vị, Báo cáo | Đã đáp ứng |
+| Quản lý: Tổng quan, Chờ duyệt, Giao công việc, Cảnh báo quá hạn, Tiến độ đơn vị, Báo cáo | Đã đáp ứng |
 | Mockup có "Nhắc trước hạn" theo từng lần giao | Chưa làm: dùng thiết lập chung (`reminderDays`) |
 | Mockup "Tài liệu" / "Báo cáo" cá nhân | "Tài liệu": trang giải thích giới hạn; Báo cáo thuộc khu Quản lý |
 

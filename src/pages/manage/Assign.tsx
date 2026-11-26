@@ -45,7 +45,7 @@ export function AssignPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tplId]);
 
-  // Người nhận chỉ trong phạm vi quyền giao việc hàng loạt (Rules chặn ở máy chủ nếu vượt).
+  // Người nhận chỉ trong phạm vi quyền giao công việc (Rules chặn ở máy chủ nếu vượt).
   const allowedUnits = useMemo(() => v.units.filter((u) => !u.archived && hasPerm(principal, 'task.bulk_assign', u.id)), [v.units, principal]);
   const allowedIds = new Set(allowedUnits.map((u) => u.id));
   const people = v.users.filter((u) => u.active && u.unitId && allowedIds.has(u.unitId));
@@ -86,7 +86,7 @@ export function AssignPage() {
 
   return (
     <div className="screen">
-      <PageHead title="Giao việc hàng loạt" sub="Giao một việc cho nhiều người hoặc nhiều bộ môn cùng lúc." />
+      <PageHead title="Giao công việc" sub="Giao một việc cho nhiều người hoặc nhiều bộ môn cùng lúc." />
       <ErrorBox errors={v.errors} />
       {done && <div className="alert info" role="status">{done}</div>}
       {pendingOcc.length > 0 && (
@@ -123,7 +123,7 @@ export function AssignPage() {
           <div className="card">
             <h3>3. Người nhận <button className="linkbtn" onClick={() => { setUserIds(new Set()); setUnitIds(new Set()); }}>Bỏ chọn</button></h3>
             <div className="tree">
-              {roots.length === 0 && <div className="empty">Bạn chưa có quyền giao việc hàng loạt cho đơn vị nào.</div>}
+              {roots.length === 0 && <div className="empty">Bạn chưa có quyền giao công việc cho đơn vị nào.</div>}
               {allowedUnits.map((u) => {
                 const members = people.filter((p) => p.unitId === u.id);
                 return (

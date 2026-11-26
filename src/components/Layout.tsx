@@ -53,8 +53,8 @@ export function Layout({ children }: { children: ReactNode }) {
               <div className="sec">Quản lý</div>
               <NavItem to="/manage/overview" icon="chart">Tổng quan</NavItem>
               <NavItem to="/manage/approvals" icon="inbox" badge={myApprovals}>Chờ duyệt</NavItem>
-              {canBulk && <NavItem to="/manage/assign" icon="users">Giao việc hàng loạt</NavItem>}
-              <NavItem to="/manage/risks" icon="warn" badge={risks} badgeClass="late">Rủi ro &amp; quá hạn</NavItem>
+              {canBulk && <NavItem to="/manage/assign" icon="users">Giao công việc</NavItem>}
+              <NavItem to="/manage/risks" icon="warn" badge={risks} badgeClass="late">Cảnh báo quá hạn</NavItem>
               <NavItem to="/manage/units" icon="users">Tiến độ đơn vị</NavItem>
               {canReport && <NavItem to="/manage/reports" icon="doc">Báo cáo &amp; xuất file</NavItem>}
             </>

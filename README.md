@@ -6,7 +6,7 @@ Web app nội bộ để **Khoa phân chia công việc, theo dõi tiến độ 
 
 ## Chức năng
 - **Cá nhân:** Việc của tôi, Kanban (kéo thả theo quy trình & quyền), Danh sách (chọn cột, gồm trường động), Lịch, Timeline, Chi tiết việc (checklist, liên kết đính kèm, bình luận @, nhật ký, tự lưu), lưu bộ lọc.
-- **Quản lý:** Tổng quan (KPI, biểu đồ tiến độ/kế hoạch, cột theo tuần), Chờ duyệt (duyệt/trả lại hàng loạt), Giao việc hàng loạt (3 cách, một batch nguyên tử), Rủi ro & quá hạn (nhắc, đổi người, gia hạn), Tiến độ đơn vị, Báo cáo (CSV/in PDF).
+- **Quản lý:** Tổng quan (KPI, biểu đồ tiến độ/kế hoạch, cột theo tuần), Chờ duyệt (duyệt/trả lại hàng loạt), Giao công việc (3 cách, một batch nguyên tử), Cảnh báo quá hạn (nhắc, đổi người, gia hạn), Tiến độ đơn vị, Báo cáo (CSV/in PDF).
 - **Cấu hình:** Loại việc & trường, Quy trình, Vai trò & quyền, Mẫu việc & lặp, Cây tổ chức, Người dùng, Thiết lập chung, Nhờ AI chỉnh cấu hình (đề xuất → xem diff → áp dụng), Lịch sử phiên bản.
 
 ## Stack

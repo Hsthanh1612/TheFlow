@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Field, Modal } from './ui';
 import { useData } from '../state/data';
 import { addDays } from '../domain/dates';
+import { useAuth } from '../state/auth';
+import { REMINDER_MAX } from '../services/firebase/taskRepo';
 import type { Task } from '../domain/types';
 
 /** Hộp nhập ý kiến/lý do (trả lại, gia hạn…). Chỉ đóng khi `onSubmit` hoàn tất (do bên gọi quyết định). */
@@ -65,6 +67,61 @@ export function ReassignDialog({ task, onClose, onSubmit }: { task: Task | null;
         <div className="row" style={{ justifyContent: 'flex-end' }}>
           <button type="button" className="btn" onClick={onClose}>Huỷ</button>
           <button type="submit" className="btn pri" disabled={!who || busy}>{busy ? 'Đang lưu…' : 'Đổi người'}</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+const QUICK_MESSAGES = [{ label: 'Cập nhật tiến độ', text: 'Nhờ bạn cập nhật tiến độ việc này.' }, { label: 'Sắp đến hạn', text: 'Việc sắp đến hạn, bạn vui lòng hoàn thành sớm.' }, { label: 'Đã quá hạn', text: 'Việc đã quá hạn, bạn báo giúp mình lý do và dự kiến hoàn thành.' }];
+
+/** Tạo lời nhắc: viết nội dung và chọn người nhận (người phụ trách / phối hợp của các việc được chọn). */
+export function ReminderDialog({ tasks, onClose, onSubmit }: { tasks: Task[] | null; onClose: () => void; onSubmit: (message: string, recipientIds: string[]) => Promise<void> }) {
+  const { userName } = useData();
+  const { profile } = useAuth();
+  const [msg, setMsg] = useState('');
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const people = tasks ? [...new Set(tasks.flatMap((t) => [...t.assigneeIds, ...t.collaboratorIds]))].filter((u) => u !== profile?.uid) : [];
+  const assignees = tasks ? new Set(tasks.flatMap((t) => t.assigneeIds)) : new Set<string>();
+  useEffect(() => {
+    if (!tasks) return;
+    setMsg(''); setErr('');
+    setPicked(new Set(tasks.flatMap((t) => t.assigneeIds).filter((u) => u !== profile?.uid)));
+  }, [tasks, profile?.uid]);
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    if (msg.trim().length === 0) return setErr('Hãy viết nội dung lời nhắc.');
+    if (picked.size === 0) return setErr('Hãy chọn ít nhất một người nhận.');
+    setErr(''); setBusy(true);
+    await onSubmit(msg.trim(), [...picked]);
+    setBusy(false);
+  }
+  const title = !tasks ? '' : tasks.length === 1 ? `Tạo lời nhắc: ${tasks[0].title}` : `Tạo lời nhắc cho ${tasks.length} việc`;
+  return (
+    <Modal open={tasks !== null} title={title} onClose={onClose}>
+      <form className="col" onSubmit={submit} noValidate>
+        <fieldset className="remind-who">
+          <legend className="lbl">Gửi tới</legend>
+          {people.length === 0 && <span className="note">Các việc này chưa có người nhận nào khác ngoài bạn.</span>}
+          {people.map((u) => (
+            <label key={u} className="ck-line">
+              <input type="checkbox" checked={picked.has(u)} onChange={(e) => setPicked((s) => { const n = new Set(s); if (e.target.checked) n.add(u); else n.delete(u); return n; })} />
+              {userName(u)} <span className="note">{assignees.has(u) ? 'Phụ trách' : 'Phối hợp'}</span>
+            </label>
+          ))}
+        </fieldset>
+        <div className="chips" aria-label="Gợi ý lời nhắc">
+          {QUICK_MESSAGES.map((m) => <button key={m.label} type="button" className="btn sm" title={m.text} onClick={() => { setMsg(m.text); setErr(''); }}>{m.label}</button>)}
+        </div>
+        <Field label="Nội dung lời nhắc" htmlFor="rm-msg" error={err} hint={`${msg.length}/${REMINDER_MAX} ký tự. Người nhận thấy lời nhắc này trong mục Thông báo.`}>
+          <textarea id="rm-msg" className="inp" value={msg} onChange={(e) => setMsg(e.target.value)} maxLength={REMINDER_MAX} aria-invalid={!!err} placeholder="Ví dụ: Em gửi anh bản nháp trước thứ Sáu nhé." autoFocus />
+        </Field>
+        <div className="row" style={{ justifyContent: 'flex-end' }}>
+          <button type="button" className="btn" onClick={onClose}>Huỷ</button>
+          <button type="submit" className="btn pri" disabled={busy}>{busy ? 'Đang gửi…' : 'Gửi lời nhắc'}</button>
         </div>
       </form>
     </Modal>

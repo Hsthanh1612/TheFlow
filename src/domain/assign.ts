@@ -63,7 +63,7 @@ function reviewersFor(mode: ReviewerMode, unitId: string, assignee: string | nul
   return [];
 }
 
-/** Sinh danh sách việc sẽ tạo cho giao việc hàng loạt. Thuần hàm — dùng cho xem trước và khi giao thật. */
+/** Sinh danh sách việc sẽ tạo cho giao công việc. Thuần hàm — dùng cho xem trước và khi giao thật. */
 export function planBulkAssign(input: BulkInput, users: UserProfile[], units: OrgUnit[]): BulkPlan {
   const plan: BulkPlan = { drafts: [], skipped: [], errors: [] };
   const userById = new Map(users.map((u) => [u.uid, u]));

@@ -60,7 +60,7 @@ export interface BulkContent {
 }
 
 /**
- * Giao việc hàng loạt trong MỘT batch nguyên tử (tất cả hoặc không việc nào). ID việc = `${bulkId}_${i}`
+ * Giao công việc trong MỘT batch nguyên tử (tất cả hoặc không việc nào). ID việc = `${bulkId}_${i}`
  * nên nếu người dùng bấm lại với cùng bulkId thì ghi đè đúng các tài liệu đó, không nhân đôi.
  */
 export async function bulkAssign(input: BulkInput, content: BulkContent, users: UserProfile[], units: OrgUnit[], actor: UserProfile, bulkId: string = newId()): Promise<BulkResult> {
@@ -201,17 +201,33 @@ export async function reassignTask(task: Task, newAssignee: string, keepOld: boo
   }
 }
 
-export async function remind(tasks: Task[], actor: UserProfile, text: (t: Task) => string): Promise<number> {
+export const REMINDER_MAX = 200;
+
+/** Nội dung thông báo gửi tới người nhận: tên người nhắc + tên việc (cắt gọn) + lời nhắn. Giữ ≤ 300 ký tự theo Rules. */
+export function reminderText(actorName: string, taskTitle: string, message: string): string {
+  const title = taskTitle.length > 60 ? `${taskTitle.slice(0, 59)}…` : taskTitle;
+  return `${actorName} nhắc bạn “${title}”: ${message.trim().slice(0, REMINDER_MAX)}`.slice(0, 300);
+}
+
+/**
+ * Tạo lời nhắc: gửi thông báo trong app kèm lời nhắn của người nhắc tới những người được chọn
+ * (người phụ trách / phối hợp của từng việc). Một batch nguyên tử; không tự gửi cho chính mình.
+ */
+export async function createReminders(tasks: Task[], recipientIds: string[], message: string, actor: UserProfile): Promise<number> {
+  if (message.trim().length === 0) throw new AppError('data', 'Hãy viết nội dung lời nhắc.');
+  if (message.trim().length > REMINDER_MAX) throw new AppError('data', `Lời nhắc tối đa ${REMINDER_MAX} ký tự.`);
   const { db } = getServices();
+  const chosen = new Set(recipientIds);
   const b = writeBatch(db);
   let n = 0;
   for (const t of tasks) {
-    for (const uid of t.assigneeIds) {
-      addNotice(b, actor.uid, { userId: uid, taskId: t.id, kind: 'reminder', text: text(t) });
+    for (const uid of new Set([...t.assigneeIds, ...t.collaboratorIds])) {
+      if (!chosen.has(uid) || uid === actor.uid) continue;
+      addNotice(b, actor.uid, { userId: uid, taskId: t.id, kind: 'reminder', text: reminderText(actor.name, t.title, message) });
       n++;
     }
   }
-  if (n === 0) return 0;
+  if (n === 0) throw new AppError('data', 'Chưa chọn người nhận (hoặc người nhận chỉ có bạn).');
   if (n > 400) throw new AppError('data', 'Quá nhiều thông báo cho một lần nhắc.');
   try {
     await b.commit();

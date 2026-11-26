@@ -74,7 +74,7 @@ export function OverviewPage() {
         </div>
         <div className="card">
           <h3>Cần chú ý <Link to="/manage/risks">Xem tất cả</Link></h3>
-          {risks.length === 0 ? <div className="empty">Không có việc rủi ro.</div> : (
+          {risks.length === 0 ? <div className="empty">Không có việc cần cảnh báo.</div> : (
             <div className="list">{risks.map(({ task, kind }) => <div className="li" key={task.id}><div><Link to={`/task/${task.id}`} style={{ fontWeight: 600, color: 'inherit', textDecoration: 'none' }}>{task.title}</Link><small>{v.unitById(task.unitId)?.name} · hạn {vnDayMonth(task.dueAt)}</small></div><span className={`b ${kind === 'overdue' ? 'late' : 'rev'}`} style={{ marginLeft: 'auto' }}>{kind === 'overdue' ? 'Quá hạn' : 'Nguy cơ'}</span></div>)}</div>
           )}
         </div>

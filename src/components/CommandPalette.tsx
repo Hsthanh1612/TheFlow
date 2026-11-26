@@ -34,8 +34,8 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       { label: 'Hồ sơ cá nhân', to: '/profile', icon: 'users' },
     ];
     if (hasPerm(principal, 'config.edit', null) || hasPerm(principal, 'user.manage', null)) list.push({ label: 'Cấu hình', to: '/settings', icon: 'settings' });
-    if (hasAnyScope(principal, 'manage.view')) list.push({ label: 'Tổng quan quản lý', to: '/manage/overview', icon: 'chart' }, { label: 'Chờ duyệt', to: '/manage/approvals', icon: 'inbox' }, { label: 'Rủi ro & quá hạn', to: '/manage/risks', icon: 'warn' }, { label: 'Tiến độ đơn vị', to: '/manage/units', icon: 'users' });
-    if (hasAnyScope(principal, 'task.bulk_assign')) list.push({ label: 'Giao việc hàng loạt', to: '/manage/assign', icon: 'users' });
+    if (hasAnyScope(principal, 'manage.view')) list.push({ label: 'Tổng quan quản lý', to: '/manage/overview', icon: 'chart' }, { label: 'Chờ duyệt', to: '/manage/approvals', icon: 'inbox' }, { label: 'Cảnh báo quá hạn', to: '/manage/risks', icon: 'warn' }, { label: 'Tiến độ đơn vị', to: '/manage/units', icon: 'users' });
+    if (hasAnyScope(principal, 'task.bulk_assign')) list.push({ label: 'Giao công việc', to: '/manage/assign', icon: 'users' });
     if (hasAnyScope(principal, 'report.export')) list.push({ label: 'Báo cáo & xuất file', to: '/manage/reports', icon: 'doc' });
     return list.map((p): Item => ({ key: `p:${p.to}`, group: 'Đi tới', label: p.label, icon: p.icon, run: go(p.to) }));
   }, [nav, onClose, principal]);

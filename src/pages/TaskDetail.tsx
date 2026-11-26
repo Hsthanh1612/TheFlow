@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Avatar, Avatars, Field, Loading, Modal, PageHead, ProgressBar } from '../components/ui';
 import { FieldInput } from '../components/TaskForm';
-import { ExtendDialog, NoteDialog, ReassignDialog } from '../components/dialogs';
+import { ExtendDialog, NoteDialog, ReassignDialog, ReminderDialog } from '../components/dialogs';
 import { TaskStatus, TypeTag, useTaskView } from '../components/taskBits';
 import { SaveHint, useAutosave } from '../state/useAutosave';
 import { useAuth } from '../state/auth';
 import { useToast } from '../state/toast';
-import { addComment, extendTask, fetchTask, reassignTask, setChecklist, setLinks, transitionTask, updateTaskFields } from '../services/firebase/taskRepo';
+import { addComment, createReminders, extendTask, fetchTask, reassignTask, setChecklist, setLinks, transitionTask, updateTaskFields } from '../services/firebase/taskRepo';
 import { AppError } from '../services/errors';
 import { subscribeComments } from '../services/firebase/subscriptions';
 import { newId } from '../services/firebase/ids';
@@ -49,6 +49,7 @@ function Detail({ task, live }: { task: Task; live: boolean }) {
   const [linkUrl, setLinkUrl] = useState('');
   const [note, setNote] = useState<WorkflowState | null>(null);
   const [extend, setExtend] = useState(false);
+  const [remind, setRemind] = useState(false);
   const [reassign, setReassign] = useState(false);
   const [edit, setEdit] = useState(false);
 
@@ -60,6 +61,8 @@ function Detail({ task, live }: { task: Task; live: boolean }) {
   const canEditContent = isDoer || canAssign;
   const canExtend = hasPerm(principal, 'task.extend', task.unitId);
   const canReassign = hasPerm(principal, 'task.reassign', task.unitId);
+  // Người giao/duyệt hoặc có quyền giao việc ở đơn vị này được nhắc người thực hiện.
+  const canRemind = (canAssign || canReassign || task.createdBy === uid || task.reviewerIds.includes(uid)) && [...task.assigneeIds, ...task.collaboratorIds].some((x) => x !== uid);
   const targets = wf ? allowedTargets(wf, task, principal) : [];
   const cat = v.categoryOfTask(task);
   const pct = v.progress(task);
@@ -98,6 +101,7 @@ function Detail({ task, live }: { task: Task; live: boolean }) {
         sub={<><Link to="/tasks/kanban">Bảng công việc</Link> / {type?.name ?? '—'}</>}
         actions={<>
           {canAssign && <button className="btn" onClick={() => setEdit(true)}>Sửa thông tin</button>}
+          {canRemind && cat !== 'done' && <button className="btn" onClick={() => setRemind(true)}>Tạo lời nhắc</button>}
           {canExtend && cat !== 'done' && <button className="btn" onClick={() => setExtend(true)}>Gia hạn</button>}
           {canReassign && cat !== 'done' && <button className="btn" onClick={() => setReassign(true)}>Đổi người</button>}
           {targets.map((t, i) => (
@@ -214,6 +218,7 @@ function Detail({ task, live }: { task: Task; live: boolean }) {
         </div>
       </div>
       <NoteDialog open={note !== null} title={note ? `Chuyển sang “${note.label}”` : ''} label="Ý kiến (bắt buộc)" required confirmText="Xác nhận" onClose={() => setNote(null)} onSubmit={async (n) => { if (note && (await go(note, n))) setNote(null); }} />
+      <ReminderDialog tasks={remind ? [task] : null} onClose={() => setRemind(false)} onSubmit={async (message, ids) => { if (!profile) return; const r = await toast.run(() => createReminders([task], ids, message, profile), 'Đã gửi lời nhắc.'); if (r.ok) setRemind(false); }} />
       <ExtendDialog task={extend ? task : null} onClose={() => setExtend(false)} onSubmit={async (due, reason) => { if (!profile) return; const r = await toast.run(() => extendTask(task, due, reason, profile), 'Đã gia hạn.'); if (r.ok) setExtend(false); }} />
       <ReassignDialog task={reassign ? task : null} onClose={() => setReassign(false)} onSubmit={async (who, keep) => { if (!profile) return; const r = await toast.run(() => reassignTask(task, who, keep, profile, v.userName), 'Đã đổi người phụ trách.'); if (r.ok) setReassign(false); }} />
       <EditDialog task={edit ? task : null} onClose={() => setEdit(false)} />
