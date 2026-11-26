@@ -58,8 +58,9 @@ service cloud.firestore {
         && request.resource.data.scopes.size() == 0
         && isIso(request.resource.data.createdAt);
       allow update: if signedIn() && (
-        // người dùng tự sửa tên
-        (id == uid() && hasProfile() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']) && isStr(request.resource.data.name, 1, 100))
+        // người dùng tự sửa tên và chủ đề màu giao diện (không có trường nào khác)
+        (id == uid() && hasProfile() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'theme']) && isStr(request.resource.data.name, 1, 100)
+          && (!('theme' in request.resource.data) || request.resource.data.theme in ['ngoc', 'tim', 'troi', 'sen']))
         // quản trị đầu tiên tự kích hoạt trong cùng batch với admins/{uid}
         || (id == uid() && !exists(/databases/$(database)/documents/admins/$(uid())) && existsAfter(/databases/$(database)/documents/admins/$(uid()))
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'unitId', 'assignments', 'scopes']))

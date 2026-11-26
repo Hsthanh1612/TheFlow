@@ -9,6 +9,7 @@ import { HomePage } from './pages/Home';
 import { TasksPage } from './pages/TasksPage';
 import { TaskDetailPage } from './pages/TaskDetail';
 import { DocsPage } from './pages/DocsPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { ManagerShell } from './pages/manage/ManagerShell';
 import { OverviewPage } from './pages/manage/Overview';
@@ -44,6 +45,7 @@ export function App() {
             <Route path="/tasks/:view" element={<TasksPage />} />
             <Route path="/task/:id" element={<TaskDetailPage />} />
             <Route path="/docs" element={<DocsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/manage" element={<Navigate to="/manage/overview" replace />} />
             <Route path="/manage/overview" element={<ManagerShell><OverviewPage /></ManagerShell>} />

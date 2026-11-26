@@ -139,6 +139,14 @@ describe('quản lý người dùng', () => {
     await assertFails(updateDoc(doc(db, 'users/an'), { active: false, unitId: 'bm2' }));
     await assertSucceeds(updateDoc(doc(db, 'users/an'), { name: 'Nguyễn An (mới)' }));
   });
+  it('tự chọn chủ đề màu: chỉ nhận giá trị hợp lệ và không kèm trường khác', async () => {
+    const db = as('an');
+    await assertSucceeds(updateDoc(doc(db, 'users/an'), { theme: 'sen' }));
+    await assertFails(updateDoc(doc(db, 'users/an'), { theme: 'do-choi' }));
+    await assertFails(updateDoc(doc(db, 'users/an'), { theme: 123 }));
+    await assertFails(updateDoc(doc(db, 'users/an'), { theme: 'tim', active: false }));
+    await assertFails(updateDoc(doc(as('an'), 'users/lan'), { theme: 'tim' }));
+  });
   it('không sửa được hồ sơ người khác; không xoá hồ sơ', async () => {
     await assertFails(updateDoc(doc(as('an'), 'users/lan'), { name: 'x' }));
     await assertFails(deleteDoc(doc(as('admin'), 'users/an')));

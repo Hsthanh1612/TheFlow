@@ -51,6 +51,7 @@ export function toUser(uid: string, d: DocumentData): UserProfile {
     assignments: arr(d.assignments),
     scopes: d.scopes && typeof d.scopes === 'object' ? d.scopes : {},
     createdAt: str(d.createdAt),
+    ...(typeof d.theme === 'string' ? { theme: d.theme } : {}),
   };
 }
 

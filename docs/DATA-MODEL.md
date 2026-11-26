@@ -1,7 +1,7 @@
 # Mô hình dữ liệu Firestore
 | Đường dẫn | Nội dung | Ghi bởi |
 |---|---|---|
-| `users/{uid}` | name, email, active, unitId, assignments[{roleKey,unitId}], scopes{perm:[unitId\|'*']}, createdAt | tự tạo (inactive); `user.manage`/admin sửa quyền; tự sửa `name` |
+| `users/{uid}` | name, email, active, unitId, assignments[{roleKey,unitId}], scopes{perm:[unitId\|'*']}, createdAt, theme (tuỳ chọn: ngoc\|tim\|troi\|sen) | tự tạo (inactive); `user.manage`/admin sửa quyền; tự sửa `name` và `theme` (Rules chỉ nhận 4 giá trị hợp lệ, không kèm trường khác) |
 | `users/{uid}/notifications/{id}` | actorId, taskId, kind, text, createdAt, readAt | người dùng active tạo (actorId=mình); chủ đọc/đánh dấu/xoá |
 | `admins/{uid}`, `meta/bootstrap` | quản trị viên đầu tiên (một lần) | batch bootstrap |
 | `units`, `roles`, `taskTypes`, `workflows`, `templates`, `terms`, `settings/app` | cấu hình động | `config.edit` (không xoá, chỉ `archived`) |

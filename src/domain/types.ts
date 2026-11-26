@@ -113,6 +113,8 @@ export interface UserProfile {
   assignments: Assignment[];
   scopes: Scopes;
   createdAt: string;
+  /** Chủ đề màu giao diện người dùng tự chọn (id trong state/theme). */
+  theme?: string;
 }
 
 export type Priority = 'low' | 'normal' | 'high';

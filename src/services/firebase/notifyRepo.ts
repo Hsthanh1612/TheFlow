@@ -2,6 +2,7 @@ import { doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { getServices } from './init';
 import { nowIso, reminderId } from './ids';
 import { classify } from '../errors';
+import type { ThemeId } from '../../state/theme';
 
 export async function markRead(uid: string, ids: string[]): Promise<void> {
   if (ids.length === 0) return;
@@ -10,6 +11,15 @@ export async function markRead(uid: string, ids: string[]): Promise<void> {
     const b = writeBatch(db);
     for (const id of ids) b.update(doc(db, 'users', uid, 'notifications', id), { readAt: nowIso() });
     await b.commit();
+  } catch (e) {
+    throw classify(e);
+  }
+}
+
+/** Lưu chủ đề màu vào hồ sơ (chạy ngầm; lỗi chỉ ghi nhận, vì chủ đề đã áp dụng cục bộ). */
+export async function saveTheme(uid: string, theme: ThemeId): Promise<void> {
+  try {
+    await updateDoc(doc(getServices().db, 'users', uid), { theme });
   } catch (e) {
     throw classify(e);
   }

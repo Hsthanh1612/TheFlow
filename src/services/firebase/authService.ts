@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, GoogleAuthProvider, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut as fbSignOut, type User } from 'firebase/auth';
+import { createUserWithEmailAndPassword, EmailAuthProvider, GoogleAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail, updatePassword, signInWithEmailAndPassword, signInWithPopup, signOut as fbSignOut, type User } from 'firebase/auth';
 import { doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { getServices } from './init';
 import { nowIso } from './ids';
@@ -60,6 +60,30 @@ export async function resetPassword(email: string): Promise<void> {
   } catch (e) {
     throw classify(e);
   }
+}
+
+/** Đổi mật khẩu: xác thực lại bằng mật khẩu hiện tại (Firebase yêu cầu đăng nhập gần đây) rồi mới đặt mật khẩu mới. */
+export async function changePassword(current: string, next: string): Promise<void> {
+  const user = getServices().auth.currentUser;
+  if (!user || !user.email) throw new AppError('auth', 'Chưa đăng nhập.');
+  if (next.length < 6) throw new AppError('data', 'Mật khẩu mới cần tối thiểu 6 ký tự.');
+  if (next === current) throw new AppError('data', 'Mật khẩu mới phải khác mật khẩu hiện tại.');
+  try {
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, current));
+  } catch (e) {
+    const code = typeof e === 'object' && e !== null && 'code' in e ? String((e as { code: unknown }).code) : '';
+    if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') throw new AppError('auth', 'Mật khẩu hiện tại không đúng.', e);
+    throw classify(e);
+  }
+  try {
+    await updatePassword(user, next);
+  } catch (e) {
+    throw classify(e);
+  }
+}
+
+export function hasPasswordLogin(): boolean {
+  return getServices().auth.currentUser?.providerData.some((p) => p.providerId === 'password') ?? false;
 }
 
 export async function signOut(): Promise<void> {

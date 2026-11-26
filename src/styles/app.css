@@ -389,3 +389,46 @@ dialog::backdrop { background: color-mix(in srgb, var(--ink) 26%, transparent); 
   .top { margin: 8px 8px 0; top: 8px; border-radius: 20px; }
   .content { padding: 16px 12px 24px; }
 }
+
+/* ===== Viền rõ hơn: đường viền ngoài đậm theo màu chữ, vẫn giữ vệt sáng bên trong cho cảm giác kính ===== */
+:root {
+  --edge: color-mix(in srgb, var(--ink) 24%, rgba(255, 255, 255, .55));
+  --edge-soft: color-mix(in srgb, var(--ink) 15%, rgba(255, 255, 255, .6));
+  --glass-line: var(--edge);
+}
+.side, .top, .card, .cal, .menu, dialog, .tk, .kc, .btn, .tabs { border-color: var(--edge); }
+.card, .side, .top, .cal { border-width: 1.5px; }
+.kc, .tk { border-color: var(--edge-soft); }
+.search, .ib, .inp, .sel, select.inp, .fr, .radio label, .tg { border-color: color-mix(in srgb, var(--ink) 30%, rgba(255, 255, 255, .5)); }
+.tbl td, .tbl th, .li, .pr, .cd, .cw, .gh, .gl, .gr { border-color: var(--edge-soft); }
+.tbl th { border-bottom-color: var(--edge); }
+.themes { border-top-color: var(--edge-soft); }
+.btn.pri, .btn.cta, .nav.on { border-color: color-mix(in srgb, var(--ps) 70%, #000); }
+.btn.cta { border-color: color-mix(in srgb, var(--a) 60%, #000); }
+.auth .card { border-color: var(--edge); }
+
+/* Tìm kiếm nhanh (Cmd/Ctrl+K) */
+.kbd-hint { display: inline-flex; gap: 3px; align-items: center; border: 0; background: transparent; padding: 0; cursor: pointer; margin-left: auto; font: inherit; }
+kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 6px; border: 1px solid var(--edge-soft); background: rgba(255, 255, 255, .7); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .08); font-family: inherit; font-weight: 600; font-size: 11px; line-height: 1; color: var(--ink-2); }
+.cmdk-wrap { position: fixed; inset: 0; z-index: 60; display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 16px; background: color-mix(in srgb, var(--ink) 28%, transparent); backdrop-filter: blur(8px) saturate(140%); -webkit-backdrop-filter: blur(8px) saturate(140%); animation: backdrop-in .2s ease both; }
+.cmdk { width: min(640px, 100%); background: var(--glass-hi); backdrop-filter: blur(38px) saturate(190%); -webkit-backdrop-filter: blur(38px) saturate(190%); border: 1.5px solid var(--edge); border-radius: 26px; box-shadow: var(--glass-edge), 0 30px 80px color-mix(in srgb, var(--ink) 32%, transparent); overflow: hidden; animation: pop .25s var(--ease) both; display: flex; flex-direction: column; max-height: min(560px, 76vh); }
+.cmdk-in { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--edge-soft); color: var(--muted); }
+.cmdk-in input { flex: 1; border: 0; background: transparent; font: inherit; font-size: 16px; color: var(--ink); outline: none; min-width: 0; }
+.cmdk-list { overflow-y: auto; padding: 8px; flex: 1; }
+.cmdk-grp { padding: 10px 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.cmdk-it { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; cursor: pointer; color: var(--ink); }
+.cmdk-it.on { background: linear-gradient(160deg, color-mix(in srgb, var(--p) 92%, #fff), var(--ps)); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45); }
+.cmdk-t { font-weight: 600; flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmdk-h { margin-left: auto; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cmdk-it.on .cmdk-h { color: rgba(255, 255, 255, .88); }
+.cmdk-ft { display: flex; gap: 16px; padding: 9px 16px; border-top: 1px solid var(--edge-soft); font-size: 12px; color: var(--muted); }
+.cmdk-ft kbd { margin-right: 3px; }
+
+/* Hồ sơ cá nhân */
+.prof-av .av { width: 52px; height: 52px; font-size: 18px; margin: 0; border-width: 3px; }
+.sw-btn.big { width: 38px; height: 38px; }
+.pr dd .tg + .tg, .pr dd .mgr + .tg { margin-left: 2px; }
+@media (max-width: 900px) { .g2 { grid-template-columns: minmax(0, 1fr); } .kbd-hint { display: none; } .cmdk-wrap { padding-top: 8vh; } }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) { .cmdk-wrap, .cmdk { backdrop-filter: none; -webkit-backdrop-filter: none; } .cmdk { background: #fff; } }
+.cmdk-in input:focus, .cmdk-in input:focus-visible { box-shadow: none; outline: none; }
+.cmdk:focus-within { border-color: var(--p); }

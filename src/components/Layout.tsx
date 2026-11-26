@@ -10,7 +10,9 @@ import { markRead } from '../services/firebase/notifyRepo';
 import { hasAnyScope, hasPerm } from '../domain/permissions';
 import { riskList } from '../domain/stats';
 import { vnDayMonth } from '../domain/dates';
-import { THEMES, setTheme, useTheme } from '../state/theme';
+import { applyTheme, isThemeId } from '../state/theme';
+import { CommandPalette } from './CommandPalette';
+import { ThemePicker } from './ThemePicker';
 
 function NavItem({ to, icon, children, badge, badgeClass }: { to: string; icon: string; children: ReactNode; badge?: number; badgeClass?: string }) {
   return (
@@ -81,9 +83,9 @@ function Topbar() {
   const [q, setQ] = useState('');
   const [openBell, setOpenBell] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
+  const [palette, setPalette] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const unread = notifications.filter((n) => !n.readAt);
-  const theme = useTheme();
 
   useEffect(() => {
     const on = () => setOnline(true);
@@ -92,7 +94,14 @@ function Topbar() {
     addEventListener('offline', off);
     return () => { removeEventListener('online', on); removeEventListener('offline', off); };
   }, []);
-  useEffect(() => { setOpenBell(false); setOpenMenu(false); }, [loc.pathname]);
+  useEffect(() => { setOpenBell(false); setOpenMenu(false); setPalette(false); }, [loc.pathname]);
+  // Chủ đề màu đã lưu trong hồ sơ tài khoản được áp dụng khi đăng nhập (đồng bộ giữa các thiết bị).
+  useEffect(() => { if (isThemeId(profile?.theme)) applyTheme(profile.theme); }, [profile?.theme]);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPalette((v) => !v); } };
+    addEventListener('keydown', h);
+    return () => removeEventListener('keydown', h);
+  }, []);
   useEffect(() => {
     const h = (e: PointerEvent) => { if (!(e.target as Element).closest?.('.rel')) { setOpenBell(false); setOpenMenu(false); } };
     addEventListener('pointerdown', h);
@@ -111,7 +120,9 @@ function Topbar() {
       <form role="search" className="search" onSubmit={(e) => { e.preventDefault(); nav(`/tasks/list?q=${encodeURIComponent(q)}`); }}>
         <Icon name="search" size={16} />
         <input type="search" placeholder="Tìm việc theo tiêu đề…" aria-label="Tìm kiếm việc" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button type="button" className="kbd-hint" onClick={() => setPalette(true)} aria-label="Mở tìm kiếm nhanh (Ctrl hoặc Cmd + K)" title="Tìm kiếm nhanh"><kbd>⌘</kbd><kbd>K</kbd></button>
       </form>
+      {palette && <CommandPalette onClose={() => setPalette(false)} />}
       <div className="tr">
         <span className={`sync${online && toast.pending === 0 ? '' : ' warn'}`} role="status">
           {!online ? 'Mất kết nối — chưa đồng bộ' : toast.pending > 0 ? 'Đang gửi lên máy chủ…' : 'Đã đồng bộ'}
@@ -149,14 +160,11 @@ function Topbar() {
           {openMenu && (
             <div className="menu" style={{ width: 240 }}>
               <div style={{ padding: '8px 0' }}><strong>{profile?.name}</strong><div className="note">{profile?.email}</div></div>
-              <div className="themes" role="group" aria-label="Màu giao diện">
+              <div className="themes">
                 <span className="note">Màu giao diện</span>
-                <div className="row" style={{ gap: 8 }}>
-                  {THEMES.map((t) => (
-                    <button key={t.id} type="button" className={`sw-btn${theme === t.id ? ' on' : ''}`} aria-label={t.name} aria-pressed={theme === t.id} title={t.name} onClick={() => setTheme(t.id)} style={{ background: `linear-gradient(135deg, ${t.swatch[0]} 50%, ${t.swatch[1]} 50%)` }} />
-                  ))}
-                </div>
+                <ThemePicker />
               </div>
+              <Link to="/profile" className="btn" style={{ width: '100%', marginBottom: 8 }}>Hồ sơ cá nhân</Link>
               <button className="btn" style={{ width: '100%' }} onClick={() => void signOut()}>Đăng xuất</button>
             </div>
           )}

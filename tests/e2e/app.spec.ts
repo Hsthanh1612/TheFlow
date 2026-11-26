@@ -268,6 +268,52 @@ test('13b. đăng nhập bằng tên tài khoản (không cần email) và báo 
   await bad.ctx.close();
 });
 
+test('13c. tìm kiếm nhanh Ctrl+K: tìm theo tên không dấu, đi tới trang, mở bằng bàn phím', async () => {
+  const p = admin.page;
+  await p.goto('/#/');
+  await expectHome(p, ADMIN.name);
+  await p.keyboard.press('Control+k');
+  const box = p.getByRole('combobox', { name: 'Tìm kiếm nhanh' });
+  await expect(box).toBeFocused();
+  await box.fill('ho so');
+  await expect(p.getByRole('option', { name: /Hồ sơ cá nhân/ })).toBeVisible();
+  await p.keyboard.press('Enter');
+  await expect(p.getByRole('heading', { level: 1, name: 'Hồ sơ cá nhân' })).toBeVisible();
+  await p.keyboard.press('Control+k');
+  await p.getByRole('combobox', { name: 'Tìm kiếm nhanh' }).fill('zzzkhongco');
+  await expect(p.getByText('Không tìm thấy kết quả')).toBeVisible();
+  await p.keyboard.press('Escape');
+  await expect(p.getByRole('dialog', { name: 'Tìm kiếm nhanh' })).toHaveCount(0);
+});
+
+test('13d. hồ sơ cá nhân: đổi họ tên, màu giao diện theo tài khoản, đổi mật khẩu', async ({ browser }) => {
+  const p = admin.page;
+  await p.goto('/#/profile');
+  await p.getByLabel('Họ và tên').fill('Hoàng Dũng (Trưởng khoa)');
+  await p.getByRole('button', { name: 'Lưu họ tên' }).click();
+  await expect(p.getByText('Đã cập nhật họ tên.')).toBeVisible();
+  await p.getByRole('button', { name: 'Tím sen' }).click();
+  await expect(p.locator('html')).toHaveAttribute('data-theme', 'sen');
+  // đăng nhập lại ở phiên khác: chủ đề đi theo tài khoản (lưu trong hồ sơ)
+  const other = await openSession(browser);
+  await login(other.page, ADMIN.email);
+  await expect(other.page.locator('html')).toHaveAttribute('data-theme', 'sen');
+  await other.ctx.close();
+  // đổi mật khẩu: sai mật khẩu hiện tại bị từ chối; đúng thì đăng nhập được bằng mật khẩu mới
+  await p.getByLabel('Mật khẩu hiện tại').fill('sai-mat-khau');
+  await p.getByLabel('Mật khẩu mới', { exact: true }).fill('matkhaumoi456');
+  await p.getByLabel('Nhập lại mật khẩu mới').fill('matkhaumoi456');
+  await p.getByRole('button', { name: 'Đổi mật khẩu' }).click();
+  await expect(p.getByText('Mật khẩu hiện tại không đúng.')).toBeVisible();
+  await p.getByLabel('Mật khẩu hiện tại').fill('matkhau123');
+  await p.getByRole('button', { name: 'Đổi mật khẩu' }).click();
+  await expect(p.getByText('Đã đổi mật khẩu.')).toBeVisible();
+  const again = await openSession(browser);
+  await login(again.page, ADMIN.email, 'matkhaumoi456');
+  await expectHome(again.page, 'Hoàng Dũng (Trưởng khoa)');
+  await again.ctx.close();
+});
+
 test('14. không có lỗi console / trang / request nghiêm trọng trong toàn bộ kịch bản', async () => {
   const all = [...admin.errors, ...an.errors];
   expect(all, all.join('\n')).toEqual([]);

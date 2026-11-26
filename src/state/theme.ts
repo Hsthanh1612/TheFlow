@@ -28,6 +28,14 @@ export function initTheme(): void {
   meta?.setAttribute('content', THEMES.find((t) => t.id === current)!.swatch[0]);
 }
 
+export const isThemeId = (v: unknown): v is ThemeId => THEMES.some((t) => t.id === v);
+
+/** Áp dụng chủ đề từ hồ sơ tài khoản (đồng bộ giữa các thiết bị), không ghi ngược lên máy chủ. */
+export function applyTheme(id: ThemeId): void {
+  if (id === current) return;
+  setTheme(id);
+}
+
 export function setTheme(id: ThemeId): void {
   current = id;
   try { localStorage.setItem(KEY, id); } catch { /* bỏ qua */ }
