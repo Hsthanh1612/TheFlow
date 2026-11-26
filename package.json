@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:rules": "node scripts/run-emulator.mjs vitest run --config vitest.rules.config.ts",
     "emulators": "node scripts/run-emulator.mjs emulators-only",
+    "demo": "node scripts/demo.mjs",
     "seed:demo": "playwright test -c playwright.seed.config.ts",
     "test:e2e": "node scripts/e2e.mjs",
     "check": "npm run check:secrets && npm run lint && npm run typecheck && npm test && npm run test:rules && npm run build",
