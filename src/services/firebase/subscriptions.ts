@@ -1,8 +1,8 @@
 import { collection, limit, onSnapshot, orderBy, query, where, documentId, type Query, type Unsubscribe } from 'firebase/firestore';
 import { getServices } from './init';
-import { toNotification, toRole, toSettings, toTask, toTaskType, toTemplate, toTerm, toUnit, toUser, toWorkflow } from './converters';
+import { toAutomation, toGoal, toNotification, toRole, toSettings, toSnapshot, toTask, toTaskType, toTemplate, toTerm, toTimeEntry, toTimer, toUnit, toUser, toWorkflow } from './converters';
 import { classify, type AppError } from '../errors';
-import type { AcademicTerm, AppNotification, AppSettings, OrgUnit, Role, Task, TaskTemplate, TaskType, UserProfile, Workflow } from '../../domain/types';
+import type { AcademicTerm, AppNotification, AppSettings, Automation, Goal, OrgUnit, Role, RunningTimer, Task, TaskTemplate, TaskType, TimeEntry, UserProfile, WeekSnapshot, Workflow } from '../../domain/types';
 import { doc } from 'firebase/firestore';
 
 type OnErr = (e: AppError) => void;
@@ -82,3 +82,28 @@ export function subscribeComments(taskId: string, onChange: (c: { id: string; au
     onErr,
   );
 }
+
+/** Giờ công: của tôi + (nếu có task.view_all) của cả phạm vi xem, cùng mẫu truy vấn với việc (Rules chỉ cho phép các truy vấn này). */
+export function subscribeTimeEntries(uid: string, viewScope: '*' | string[], onChange: (e: TimeEntry[]) => void, onErr: OnErr): Unsubscribe {
+  const { db } = getServices();
+  const parts = new Map<string, TimeEntry[]>();
+  const emit = () => {
+    const m = new Map<string, TimeEntry>();
+    for (const list of parts.values()) for (const e of list) m.set(e.id, e);
+    onChange([...m.values()]);
+  };
+  const add = (key: string, q: Query): Unsubscribe => listen(q, toTimeEntry, (items) => { parts.set(key, items); emit(); }, onErr);
+  const col = collection(db, 'timeEntries');
+  const offs: Unsubscribe[] = [add('mine', query(col, where('userId', '==', uid), limit(MAX_TASKS_LISTENED)))];
+  if (viewScope === '*') offs.push(add('all', query(col, limit(MAX_TASKS_LISTENED))));
+  else for (let i = 0; i < viewScope.length; i += 30) offs.push(add(`u${i}`, query(col, where('unitId', 'in', viewScope.slice(i, i + 30)), limit(MAX_TASKS_LISTENED))));
+  return () => offs.forEach((o) => o());
+}
+
+export function subscribeTimer(uid: string, onChange: (t: RunningTimer | null) => void, onErr: OnErr): Unsubscribe {
+  return onSnapshot(doc(getServices().db, 'users', uid, 'timer', 'current'), (s) => onChange(toTimer(s.data())), (e) => onErr(classify(e)));
+}
+
+export const subscribeGoals = (onChange: (g: Goal[]) => void, onErr: OnErr): Unsubscribe => listen(query(collection(getServices().db, 'goals'), limit(500)), toGoal, onChange, onErr);
+export const subscribeAutomations = (onChange: (a: Automation[]) => void, onErr: OnErr): Unsubscribe => listen(query(collection(getServices().db, 'automations'), limit(200)), toAutomation, onChange, onErr);
+export const subscribeSnapshots = (onChange: (s: WeekSnapshot[]) => void, onErr: OnErr): Unsubscribe => listen(query(collection(getServices().db, 'snapshots'), limit(120)), toSnapshot, onChange, onErr);

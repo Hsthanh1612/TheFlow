@@ -1,5 +1,5 @@
 import type { DocumentData } from 'firebase/firestore';
-import type { AcademicTerm, ActivityEntry, AppNotification, AppSettings, OrgUnit, Role, Task, TaskTemplate, TaskType, UserProfile, Workflow } from '../../domain/types';
+import type { AcademicTerm, ActivityEntry, AppNotification, AppSettings, Automation, Goal, OrgUnit, Role, RunningTimer, Task, TaskTemplate, TaskType, TimeEntry, UserProfile, WeekSnapshot, Workflow } from '../../domain/types';
 import { DEFAULT_SETTINGS } from '../../domain/types';
 import { withDerived } from '../../domain/workflow';
 
@@ -52,6 +52,7 @@ export function toUser(uid: string, d: DocumentData): UserProfile {
     scopes: d.scopes && typeof d.scopes === 'object' ? d.scopes : {},
     createdAt: str(d.createdAt),
     ...(typeof d.theme === 'string' ? { theme: d.theme } : {}),
+    ...(typeof d.mode === 'string' ? { mode: d.mode } : {}),
   };
 }
 
@@ -95,4 +96,45 @@ export function toSettings(d: DocumentData | undefined): AppSettings {
 
 export function toNotification(id: string, userId: string, d: DocumentData): AppNotification {
   return { id, userId, actorId: str(d.actorId), taskId: typeof d.taskId === 'string' ? d.taskId : null, kind: d.kind, text: str(d.text), createdAt: str(d.createdAt), readAt: typeof d.readAt === 'string' ? d.readAt : null };
+}
+
+const num = (v: unknown, d = 0): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+
+export function toTimeEntry(id: string, d: DocumentData): TimeEntry {
+  return { id, taskId: str(d.taskId), userId: str(d.userId), unitId: str(d.unitId), day: str(d.day), minutes: num(d.minutes), note: str(d.note), source: d.source === 'timer' ? 'timer' : 'manual', createdAt: str(d.createdAt) };
+}
+
+export function toTimer(d: DocumentData | undefined): RunningTimer | null {
+  if (!d || typeof d.taskId !== 'string' || typeof d.startedAt !== 'string') return null;
+  return { taskId: d.taskId, title: str(d.title), startedAt: d.startedAt };
+}
+
+export function toGoal(id: string, d: DocumentData): Goal {
+  return {
+    id, name: str(d.name), description: str(d.description), unitId: str(d.unitId), ownerId: str(d.ownerId),
+    termId: typeof d.termId === 'string' ? d.termId : null, dueDate: typeof d.dueDate === 'string' ? d.dueDate : null,
+    status: d.status === 'done' || d.status === 'archived' ? d.status : 'active',
+    keyResults: arr<Record<string, unknown>>(d.keyResults).map((k) => ({ id: str(k.id), text: str(k.text), target: num(k.target), current: num(k.current), unit: str(k.unit) })),
+    taskIds: arr<string>(d.taskIds), createdBy: str(d.createdBy), createdAt: str(d.createdAt), updatedAt: str(d.updatedAt),
+  };
+}
+
+export function toAutomation(id: string, d: DocumentData): Automation {
+  const tr = (d.trigger ?? {}) as Record<string, unknown>;
+  const ac = (d.action ?? {}) as Record<string, unknown>;
+  const kind = ['state_changed', 'task_created', 'due_soon', 'overdue'].includes(String(tr.kind)) ? (tr.kind as Automation['trigger']['kind']) : 'state_changed';
+  const cat = ['todo', 'doing', 'review', 'done'].includes(String(tr.toCategory)) ? (tr.toCategory as Automation['trigger']['toCategory']) : null;
+  return {
+    id, name: str(d.name), enabled: d.enabled === true,
+    trigger: { kind, typeId: typeof tr.typeId === 'string' ? tr.typeId : null, toCategory: cat, days: num(tr.days, 1) },
+    action: { kind: 'notify', to: arr<Automation['action']['to'][number]>(ac.to), text: str(ac.text) },
+    createdBy: str(d.createdBy), createdAt: str(d.createdAt), updatedAt: str(d.updatedAt),
+  };
+}
+
+export function toSnapshot(id: string, d: DocumentData): WeekSnapshot {
+  const c = (v: unknown) => { const o = (v ?? {}) as Record<string, unknown>; return { todo: num(o.todo), doing: num(o.doing), review: num(o.review), done: num(o.done), late: num(o.late) }; };
+  const by: Record<string, ReturnType<typeof c>> = {};
+  for (const [k, v] of Object.entries((d.byUnit ?? {}) as Record<string, unknown>)) by[k] = c(v);
+  return { id, week: str(d.week, id), total: c(d.total), byUnit: by, takenBy: str(d.takenBy), createdAt: str(d.createdAt) };
 }

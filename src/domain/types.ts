@@ -115,6 +115,8 @@ export interface UserProfile {
   createdAt: string;
   /** Chủ đề màu giao diện người dùng tự chọn (id trong state/theme). */
   theme?: string;
+  /** Chế độ sáng/tối người dùng tự chọn: 'light' | 'dark' | 'auto' (theo hệ điều hành). */
+  mode?: string;
 }
 
 export type Priority = 'low' | 'normal' | 'high';
@@ -204,7 +206,7 @@ export interface AppNotification {
   userId: string;
   actorId: string;
   taskId: string | null;
-  kind: 'assigned' | 'mention' | 'review_requested' | 'approved' | 'returned' | 'reminder' | 'overdue' | 'extended' | 'reassigned';
+  kind: 'assigned' | 'mention' | 'review_requested' | 'approved' | 'returned' | 'reminder' | 'overdue' | 'extended' | 'reassigned' | 'automation';
   text: string;
   createdAt: string;
   readAt: string | null;
@@ -222,5 +224,85 @@ export interface ActivityEntry {
   actorId: string;
   action: string;
   detail: string;
+  createdAt: string;
+}
+
+// ---------- Theo dõi thời gian ----------
+export interface TimeEntry {
+  id: string;
+  taskId: string;
+  userId: string;
+  unitId: string; // sao chép từ việc để Rules/báo cáo lọc theo đơn vị
+  day: string; // YYYY-MM-DD (ngày bắt đầu, giờ địa phương)
+  minutes: number;
+  note: string;
+  source: 'timer' | 'manual';
+  createdAt: string;
+}
+
+/** Đồng hồ đang chạy của một người (tối đa một cái), lưu ở users/{uid}/timer/current để theo người dùng sang thiết bị khác. */
+export interface RunningTimer {
+  taskId: string;
+  title: string;
+  startedAt: string; // ISO
+}
+
+// ---------- Mục tiêu (OKR) ----------
+export interface KeyResult {
+  id: string;
+  text: string;
+  target: number;
+  current: number;
+  unit: string;
+}
+
+export type GoalStatus = 'active' | 'done' | 'archived';
+
+export interface Goal {
+  id: string;
+  name: string;
+  description: string;
+  unitId: string;
+  ownerId: string;
+  termId: string | null;
+  dueDate: string | null;
+  status: GoalStatus;
+  keyResults: KeyResult[];
+  taskIds: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------- Tự động hoá ----------
+export type AutoTriggerKind = 'state_changed' | 'task_created' | 'due_soon' | 'overdue';
+export type AutoRecipient = 'assignees' | 'collaborators' | 'reviewers' | 'creator' | 'unit_head';
+
+export interface Automation {
+  id: string;
+  name: string;
+  enabled: boolean;
+  trigger: { kind: AutoTriggerKind; typeId: string | null; toCategory: StateCategory | null; days: number };
+  action: { kind: 'notify'; to: AutoRecipient[]; text: string };
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------- Ảnh chụp tình trạng theo tuần ----------
+export interface SnapshotCounts {
+  todo: number;
+  doing: number;
+  review: number;
+  done: number;
+  late: number;
+}
+
+export interface WeekSnapshot {
+  id: string; // = week
+  week: string; // thứ Hai đầu tuần, YYYY-MM-DD
+  total: SnapshotCounts;
+  byUnit: Record<string, SnapshotCounts>;
+  takenBy: string;
   createdAt: string;
 }

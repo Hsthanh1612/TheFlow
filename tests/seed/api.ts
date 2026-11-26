@@ -1,13 +1,15 @@
 // Chạy TRONG trình duyệt (nạp qua dev server) bằng tài khoản quản trị đang đăng nhập, dùng đúng các hàm repo của app,
 // nên dữ liệu mẫu đi qua cùng Firestore Rules và cùng logic với dùng thật. Chỉ dành cho Emulator.
-import { collection, doc, getDocs, getDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, query, where } from 'firebase/firestore';
 import { getServices } from '../../src/services/firebase/init';
-import { toUser } from '../../src/services/firebase/converters';
+import { toTask, toUser } from '../../src/services/firebase/converters';
 import { applyConfig, saveUserAccess } from '../../src/services/firebase/configRepo';
 import { addComment, createTask, extendTask, fetchTask, transitionTask } from '../../src/services/firebase/taskRepo';
+import { addManualEntry, saveAutomation, saveGoal, takeSnapshot } from '../../src/services/firebase/featuresRepo';
+import type { Automation, Goal } from '../../src/domain/types';
 import { defaultConfig } from '../../src/domain/defaultConfig';
 import { principalOf } from '../../src/domain/permissions';
-import { addDays } from '../../src/domain/dates';
+import { addDays, weekStart } from '../../src/domain/dates';
 import type { KhoaConfig } from '../../src/domain/config';
 import type { Priority, UserProfile } from '../../src/domain/types';
 import { ADMIN, MEMBERS, PASSWORD, type Member } from './data';
@@ -138,7 +140,64 @@ export async function seed(): Promise<string> {
   const late = byTitle('Báo cáo hoạt động phòng lab mạng');
   await extendTask((await fetchTask(late.id))!, day(5), 'Chờ số liệu từ phòng thiết bị.', adminProfile);
 
+  // 5) Mục tiêu (OKR): gắn các việc và kết quả chính
+  const idOf = (s: string) => made.find((m) => m.t.title === s)!.id;
+  const nowI = new Date().toISOString();
+  const goals: Goal[] = [
+    { id: 'goal_kiemdinh', name: 'Hoàn thành hồ sơ kiểm định chương trình CNTT', description: 'Thu thập minh chứng, rà soát chuẩn đầu ra và nộp báo cáo tự đánh giá trước hạn.', unitId: 'khoa', ownerId: uid('an@khoa.test'), termId: 'hk1_2627', dueDate: day(40),
+      status: 'active', keyResults: [{ id: 'kr1', text: 'Minh chứng đã thu thập', target: 30, current: 18, unit: 'bộ' }, { id: 'kr2', text: 'Báo cáo tự đánh giá hoàn thiện', target: 3, current: 1, unit: 'phần' }, { id: 'kr3', text: 'Doanh nghiệp góp ý chuẩn đầu ra', target: 5, current: 2, unit: 'đơn vị' }],
+      taskIds: [idOf('Rà soát chuẩn đầu ra chương trình CNTT'), idOf('Cập nhật đề cương học phần Khoa học dữ liệu'), idOf('Báo cáo tổng kết học kỳ 1')], createdBy: adminUid, createdAt: nowI, updatedAt: nowI },
+    { id: 'goal_tuyensinh', name: 'Chuẩn bị tuyển sinh 2027', description: 'Tờ rơi, buổi tư vấn tại trường THPT và danh sách thí sinh đăng ký.', unitId: 'khoa', ownerId: uid('mai@khoa.test'), termId: null, dueDate: day(21),
+      status: 'active', keyResults: [{ id: 'kr1', text: 'Buổi tư vấn tại trường THPT', target: 4, current: 1, unit: 'buổi' }],
+      taskIds: [idOf('Chuẩn bị tờ rơi tuyển sinh 2027'), idOf('Tư vấn tuyển sinh tại trường THPT'), idOf('Tổng hợp danh sách thí sinh đăng ký')], createdBy: adminUid, createdAt: nowI, updatedAt: nowI },
+    { id: 'goal_dethi', name: 'Hoàn tất ra đề thi cuối kỳ', description: '', unitId: 'khoa', ownerId: uid('bich@khoa.test'), termId: 'hk1_2627', dueDate: day(-5), status: 'active', keyResults: [],
+      taskIds: made.filter((m) => m.t.type === 'de_thi').map((m) => m.id), createdBy: adminUid, createdAt: new Date(Date.now() - 40 * 86_400_000).toISOString(), updatedAt: nowI },
+  ];
+  for (const g of goals) await saveGoal(g);
+
+  // 6) Tự động hoá
+  const mk = (id: string, name: string, trigger: Automation['trigger'], to: Automation['action']['to'], text: string): Automation => ({ id, name, enabled: true, trigger, action: { kind: 'notify', to, text }, createdBy: adminUid, createdAt: nowI, updatedAt: nowI });
+  const autos = [
+    mk('au_review', 'Báo người duyệt khi có việc nộp', { kind: 'state_changed', typeId: null, toCategory: 'review', days: 1 }, ['reviewers'], '{actor} vừa nộp “{title}” chờ bạn duyệt.'),
+    mk('au_done', 'Báo khi việc hoàn thành', { kind: 'state_changed', typeId: null, toCategory: 'done', days: 1 }, ['assignees', 'creator'], '“{title}” đã hoàn thành.'),
+    mk('au_soon', 'Nhắc trước hạn 2 ngày', { kind: 'due_soon', typeId: null, toCategory: null, days: 2 }, ['assignees'], '“{title}” còn 2 ngày nữa đến hạn ({due}).'),
+    mk('au_late', 'Báo Trưởng bộ môn khi việc quá hạn', { kind: 'overdue', typeId: null, toCategory: null, days: 1 }, ['unit_head'], '“{title}” đã quá hạn (hạn {due}).'),
+  ];
+  for (const a of autos) await saveAutomation(a);
+
+  // 7) Ảnh chụp tình trạng 6 tuần gần nhất (số liệu minh hoạ để xem biểu đồ xu hướng; tuần hiện tại do app tự chụp)
+  const monday = (n: number) => addDays(weekKeyOf(today), -7 * n);
+  const shape = [[3, 5, 1, 6, 1], [4, 6, 2, 8, 2], [4, 7, 2, 10, 3], [3, 8, 3, 12, 2], [3, 9, 3, 14, 4], [2, 10, 4, 16, 3]];
+  for (let i = 0; i < shape.length; i++) {
+    const [todo, doing, review, done, late] = shape[i];
+    const total = { todo, doing, review, done, late };
+    const week = monday(shape.length - i);
+    await takeSnapshot({ id: week, week, total, byUnit: { khoa: { todo: 1, doing: 2, review: 1, done: 3, late: 1 }, cnpm: { todo: Math.ceil(todo / 3), doing: Math.ceil(doing / 3), review: 1, done: Math.ceil(done / 3), late: 1 }, httt: { todo: 1, doing: Math.ceil(doing / 4), review: 1, done: Math.ceil(done / 4), late: 1 }, khdl: { todo: 1, doing: 2, review: 0, done: Math.ceil(done / 4), late: 0 }, mmt: { todo: 0, doing: 2, review: 1, done: Math.ceil(done / 5), late: 0 } }, takenBy: adminUid, createdAt: new Date(Date.parse(`${week}T08:00:00Z`)).toISOString() });
+  }
+
   // Xác nhận quyền admin đọc được dữ liệu vừa ghi
   const check = await getDoc(doc(db, 'tasks', made[0].id));
-  return `Đã tạo ${created} việc, ${MEMBERS.length} thành viên, ${cfg.units.length - 1} bộ môn, ${cfg.templates.length} mẫu việc; task đầu tồn tại: ${check.exists()}`;
+  return `Đã tạo ${created} việc, ${MEMBERS.length} thành viên, ${cfg.units.length - 1} bộ môn, ${cfg.templates.length} mẫu việc, ${goals.length} mục tiêu, ${autos.length} quy tắc tự động, ${shape.length} ảnh chụp tuần; task đầu tồn tại: ${check.exists()}`;
+}
+
+const weekKeyOf = (d: string): string => weekStart(d);
+
+/** Mỗi thành viên tự ghi giờ cho các việc mình phụ trách (Rules chỉ cho ghi giờ của chính mình). Chạy trong phiên của thành viên đó. */
+export async function seedTime(): Promise<number> {
+  const { auth } = getServices();
+  const me = auth.currentUser!.uid;
+  const today = new Date().toISOString().slice(0, 10);
+  const { db } = getServices();
+  const mine = (await getDocs(query(collection(db, 'tasks'), where('participantIds', 'array-contains', me)))).docs.map((d) => toTask(d.id, d.data()));
+  const notes = ['Soạn nội dung', 'Họp trao đổi', 'Chỉnh sửa theo góp ý', 'Tổng hợp số liệu', 'Hoàn thiện bản nháp'];
+  let n = 0;
+  const open = mine.filter((t) => t.assigneeIds.includes(me)).slice(0, 5);
+  for (let i = 0; i < open.length; i++) {
+    for (let k = 0; k < 2; k++) {
+      const minutes = 30 + ((i * 37 + k * 55 + me.length * 7) % 150);
+      await addManualEntry(me, open[i], addDays(today, -((i * 2 + k * 3) % 9)), minutes, notes[(i + k) % notes.length]);
+      n++;
+    }
+  }
+  return n;
 }

@@ -19,9 +19,15 @@ import { RisksPage } from './pages/manage/Risks';
 import { UnitsPage } from './pages/manage/Units';
 import { ReportsPage } from './pages/manage/Reports';
 import { useReminders } from './state/useReminders';
+import { useBackgroundJobs } from './state/automation';
+import { GoalsPage } from './pages/GoalsPage';
+import { WorkloadPage } from './pages/manage/Workload';
+import { TimeReportPage } from './pages/manage/TimeReport';
+import { TrendsPage } from './pages/manage/Trends';
 
 function Reminders() {
   useReminders();
+  useBackgroundJobs();
   return null;
 }
 
@@ -46,6 +52,7 @@ export function App() {
             <Route path="/task/:id" element={<TaskDetailPage />} />
             <Route path="/docs" element={<DocsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/goals" element={<GoalsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/manage" element={<Navigate to="/manage/overview" replace />} />
             <Route path="/manage/overview" element={<ManagerShell><OverviewPage /></ManagerShell>} />
@@ -53,6 +60,9 @@ export function App() {
             <Route path="/manage/assign" element={<ManagerShell><AssignPage /></ManagerShell>} />
             <Route path="/manage/risks" element={<ManagerShell><RisksPage /></ManagerShell>} />
             <Route path="/manage/units" element={<ManagerShell><UnitsPage /></ManagerShell>} />
+            <Route path="/manage/workload" element={<ManagerShell><WorkloadPage /></ManagerShell>} />
+            <Route path="/manage/time" element={<ManagerShell><TimeReportPage /></ManagerShell>} />
+            <Route path="/manage/trends" element={<ManagerShell><TrendsPage /></ManagerShell>} />
             <Route path="/manage/reports" element={<ManagerShell><ReportsPage /></ManagerShell>} />
             <Route path="*" element={<div className="card"><div className="empty">Không tìm thấy trang.</div></div>} />
           </Routes>

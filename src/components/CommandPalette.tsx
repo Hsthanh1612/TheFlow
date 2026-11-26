@@ -30,11 +30,12 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       { label: 'Danh sách việc', to: '/tasks/list', icon: 'list' },
       { label: 'Lịch Khoa', to: '/tasks/calendar', icon: 'calendar' },
       { label: 'Timeline', to: '/tasks/timeline', icon: 'timeline' },
+      { label: 'Mục tiêu', to: '/goals', icon: 'target' },
       { label: 'Tài liệu', to: '/docs', icon: 'doc' },
       { label: 'Hồ sơ cá nhân', to: '/profile', icon: 'users' },
     ];
     if (hasPerm(principal, 'config.edit', null) || hasPerm(principal, 'user.manage', null)) list.push({ label: 'Cấu hình', to: '/settings', icon: 'settings' });
-    if (hasAnyScope(principal, 'manage.view')) list.push({ label: 'Tổng quan quản lý', to: '/manage/overview', icon: 'chart' }, { label: 'Chờ duyệt', to: '/manage/approvals', icon: 'inbox' }, { label: 'Cảnh báo quá hạn', to: '/manage/risks', icon: 'warn' }, { label: 'Tiến độ đơn vị', to: '/manage/units', icon: 'users' });
+    if (hasAnyScope(principal, 'manage.view')) list.push({ label: 'Tổng quan quản lý', to: '/manage/overview', icon: 'chart' }, { label: 'Chờ duyệt', to: '/manage/approvals', icon: 'inbox' }, { label: 'Cảnh báo quá hạn', to: '/manage/risks', icon: 'warn' }, { label: 'Tiến độ đơn vị', to: '/manage/units', icon: 'users' }, { label: 'Khối lượng công việc', to: '/manage/workload', icon: 'workload' }, { label: 'Giờ công', to: '/manage/time', icon: 'clock' }, { label: 'Xu hướng & burndown', to: '/manage/trends', icon: 'trend' });
     if (hasAnyScope(principal, 'task.bulk_assign')) list.push({ label: 'Giao công việc', to: '/manage/assign', icon: 'users' });
     if (hasAnyScope(principal, 'report.export')) list.push({ label: 'Báo cáo & xuất file', to: '/manage/reports', icon: 'doc' });
     return list.map((p): Item => ({ key: `p:${p.to}`, group: 'Đi tới', label: p.label, icon: p.icon, run: go(p.to) }));

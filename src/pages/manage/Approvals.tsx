@@ -5,6 +5,7 @@ import { TypeTag, useTaskView } from '../../components/taskBits';
 import { NoteDialog } from '../../components/dialogs';
 import { useScope } from './ManagerShell';
 import { useAuth } from '../../state/auth';
+import { useAutomation } from '../../state/automation';
 import { useToast } from '../../state/toast';
 import { bulkTransition } from '../../services/firebase/taskRepo';
 import { hasPerm } from '../../domain/permissions';
@@ -12,6 +13,7 @@ import { vnDate, vnDayMonth } from '../../domain/dates';
 
 export function ApprovalsPage() {
   const v = useTaskView();
+  const auto = useAutomation();
   const s = useScope();
   const { profile, principal } = useAuth();
   const toast = useToast();
@@ -30,7 +32,7 @@ export function ApprovalsPage() {
 
   async function approve() {
     if (!profile) return;
-    const r = await toast.run(() => bulkTransition(items(chosen), 'approve', '', profile, principal), `Đã duyệt ${chosen.length} việc.`);
+    const r = await toast.run(() => bulkTransition(items(chosen), 'approve', '', profile, principal, (t, k) => { const w = v.wfOfTask(t); return w ? auto.forTransition(t, w, k) : []; }), `Đã duyệt ${chosen.length} việc.`);
     if (r.ok) setSel(new Set());
   }
 
@@ -82,7 +84,7 @@ export function ApprovalsPage() {
         </div>
       </div>
       <NoteDialog open={returning} title={`Trả lại ${chosen.length} việc`} label="Ý kiến trả lại (bắt buộc)" required confirmText="Trả lại" onClose={() => setReturning(false)}
-        onSubmit={async (note) => { if (!profile) return; const r = await toast.run(() => bulkTransition(items(chosen), 'return', note, profile, principal), `Đã trả lại ${chosen.length} việc.`); if (r.ok) { setSel(new Set()); setReturning(false); } }} />
+        onSubmit={async (note) => { if (!profile) return; const r = await toast.run(() => bulkTransition(items(chosen), 'return', note, profile, principal, (t, k) => { const w = v.wfOfTask(t); return w ? auto.forTransition(t, w, k) : []; }), `Đã trả lại ${chosen.length} việc.`); if (r.ok) { setSel(new Set()); setReturning(false); } }} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectHome, openSession, register } from '../e2e/helpers';
+import { expectHome, login, openSession, register } from '../e2e/helpers';
 import { ADMIN, MEMBERS, PASSWORD } from './data';
 
 test('nạp dữ liệu mẫu vào Emulator', async ({ browser }) => {
@@ -22,4 +22,19 @@ test('nạp dữ liệu mẫu vào Emulator', async ({ browser }) => {
   });
   console.log(msg);
   expect(msg).toContain('Đã tạo');
+
+  // Mỗi thành viên ghi giờ công cho việc của mình
+  let entries = 0;
+  for (const m of MEMBERS) {
+    const s = await openSession(browser);
+    await login(s.page, m.email, PASSWORD);
+    await expect(s.page.getByRole('heading', { level: 1 })).toContainText('Xin chào', { timeout: 30_000 });
+    entries += await s.page.evaluate(async () => {
+      const url = '/tests/seed/api.ts';
+      const mod = (await import(/* @vite-ignore */ url)) as { seedTime: () => Promise<number> };
+      return mod.seedTime();
+    });
+    await s.ctx.close();
+  }
+  console.log(`Đã ghi ${entries} bản ghi giờ công`);
 });

@@ -6,6 +6,8 @@ import { ExtendDialog, NoteDialog, ReassignDialog, ReminderDialog } from '../com
 import { TaskStatus, TypeTag, useTaskView } from '../components/taskBits';
 import { SaveHint, useAutosave } from '../state/useAutosave';
 import { useAuth } from '../state/auth';
+import { useAutomation } from '../state/automation';
+import { TimeTracker } from '../components/TimeTracker';
 import { useToast } from '../state/toast';
 import { addComment, createReminders, extendTask, fetchTask, reassignTask, setChecklist, setLinks, transitionTask, updateTaskFields } from '../services/firebase/taskRepo';
 import { AppError } from '../services/errors';
@@ -55,6 +57,7 @@ function Detail({ task, live }: { task: Task; live: boolean }) {
 
   useEffect(() => subscribeComments(task.id, setComments, (e) => setCErr(e.message)), [task.id]);
 
+  const auto = useAutomation();
   const uid = profile!.uid;
   const isDoer = task.assigneeIds.includes(uid) || task.collaboratorIds.includes(uid);
   const canAssign = hasPerm(principal, 'task.assign', task.unitId);
@@ -80,7 +83,7 @@ function Detail({ task, live }: { task: Task; live: boolean }) {
 
   async function go(s: WorkflowState, noteText: string) {
     if (!wf || !profile) return false;
-    const r = await toast.run(() => transitionTask({ task, workflow: wf, to: s.key, note: noteText, actor: profile, principal }), `Đã chuyển sang “${s.label}”.`);
+    const r = await toast.run(() => transitionTask({ task, workflow: wf, to: s.key, note: noteText, actor: profile, principal, extraNotices: auto.forTransition(task, wf, s.key) }), `Đã chuyển sang “${s.label}”.`);
     return r.ok;
   }
 
@@ -137,6 +140,7 @@ function Detail({ task, live }: { task: Task; live: boolean }) {
               </form>
             )}
           </div>
+          <TimeTracker task={task} />
           <div className="card">
             <h3>Tệp đính kèm (liên kết)</h3>
             <div className="col" style={{ gap: 8 }}>

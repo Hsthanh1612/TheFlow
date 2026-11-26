@@ -22,7 +22,7 @@ function addNotice(b: WriteBatch, actorId: string, n: Notice): void {
 export type TaskFormInput = Omit<NewTaskInput, 'id' | 'createdBy' | 'now' | 'newItemId' | 'bulkId' | 'templateId'> & { templateId?: string | null };
 
 /** Tạo một việc. Kiểm tra trường động trước khi ghi; chỉ resolve khi máy chủ đã xác nhận. */
-export async function createTask(input: TaskFormInput, actor: UserProfile): Promise<string> {
+export async function createTask(input: TaskFormInput, actor: UserProfile, extra?: (task: Task) => Notice[]): Promise<string> {
   const errs = validateCustomFields(input.type.fields, input.customFields);
   if (Object.keys(errs).length > 0) throw new AppError('data', Object.values(errs)[0]);
   if (input.title.trim().length === 0) throw new AppError('data', 'Tiêu đề không được để trống.');
@@ -35,6 +35,7 @@ export async function createTask(input: TaskFormInput, actor: UserProfile): Prom
     b.set(doc(db, 'tasks', id), task);
     for (const uid of task.assigneeIds) addNotice(b, actor.uid, { userId: uid, taskId: id, kind: 'assigned', text: `${actor.name} giao việc “${task.title}” cho bạn` });
     for (const uid of task.collaboratorIds) addNotice(b, actor.uid, { userId: uid, taskId: id, kind: 'assigned', text: `${actor.name} nhờ bạn phối hợp “${task.title}”` });
+    for (const n of extra?.(task) ?? []) addNotice(b, actor.uid, n); // thông báo do quy tắc tự động hoá, cùng một lần ghi
     await b.commit();
     return id;
   } catch (e) {
@@ -99,6 +100,8 @@ export interface TransitionOptions {
   actor: UserProfile;
   principal: Principal | null;
   taskTitleForNotice?: string;
+  /** Thông báo do quy tắc tự động hoá, ghi cùng batch với việc chuyển trạng thái. */
+  extraNotices?: Notice[];
 }
 
 function transitionNotices(task: Task, workflow: Workflow, to: string, actor: UserProfile, note: string): Notice[] {
@@ -122,6 +125,7 @@ export async function transitionTask(o: TransitionOptions): Promise<void> {
     const b = writeBatch(db);
     b.update(doc(db, 'tasks', o.task.id), stripUndefined(transitionPatch({ task: o.task, workflow: o.workflow, to: o.to, note: o.note, actorId: o.actor.uid, now: nowIso(), activityId: newId() })));
     for (const n of transitionNotices(o.task, o.workflow, o.to, o.actor, o.note.trim())) addNotice(b, o.actor.uid, n);
+    for (const n of o.extraNotices ?? []) addNotice(b, o.actor.uid, n);
     await b.commit();
   } catch (e) {
     throw classify(e);
@@ -129,7 +133,7 @@ export async function transitionTask(o: TransitionOptions): Promise<void> {
 }
 
 /** Duyệt hoặc trả lại nhiều việc trong một batch nguyên tử. Mỗi việc đều ghi nhật ký. */
-export async function bulkTransition(items: { task: Task; workflow: Workflow }[], to: 'approve' | 'return', note: string, actor: UserProfile, principal: Principal | null): Promise<number> {
+export async function bulkTransition(items: { task: Task; workflow: Workflow }[], to: 'approve' | 'return', note: string, actor: UserProfile, principal: Principal | null, extra?: (task: Task, toStateKey: string) => Notice[]): Promise<number> {
   if (items.length === 0) return 0;
   if (items.length > 150) throw new AppError('data', 'Tối đa 150 việc mỗi lần.');
   if (to === 'return' && note.trim().length === 0) throw new AppError('data', 'Trả lại bắt buộc ghi ý kiến.');
@@ -146,6 +150,7 @@ export async function bulkTransition(items: { task: Task; workflow: Workflow }[]
     if (c.requiresComment && note.trim().length === 0) throw new AppError('data', 'Bước này bắt buộc nhập ý kiến.');
     batch.update(doc(db, 'tasks', task.id), stripUndefined(transitionPatch({ task, workflow, to: target.key, note, actorId: actor.uid, now, activityId: newId() })));
     for (const n of transitionNotices(task, workflow, target.key, actor, note.trim())) addNotice(batch, actor.uid, n);
+    for (const n of extra?.(task, target.key) ?? []) addNotice(batch, actor.uid, n);
   }
   try {
     await batch.commit();

@@ -4,6 +4,7 @@ import { Icon } from '../../components/ui';
 import { AssigneeAvatars, TypeTag, useTaskView } from '../../components/taskBits';
 import { NoteDialog } from '../../components/dialogs';
 import { useAuth } from '../../state/auth';
+import { useAutomation } from '../../state/automation';
 import { useToast } from '../../state/toast';
 import { AppError } from '../../services/errors';
 import { transitionTask } from '../../services/firebase/taskRepo';
@@ -19,6 +20,7 @@ const CATS: StateCategory[] = ['todo', 'doing', 'review', 'done'];
 export function KanbanView({ tasks, typeId }: { tasks: Task[]; typeId: string }) {
   const v = useTaskView();
   const { profile, principal } = useAuth();
+  const auto = useAutomation();
   const toast = useToast();
   const form = useTaskForm();
   const [drag, setDrag] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export function KanbanView({ tasks, typeId }: { tasks: Task[]; typeId: string })
     const c = checkTransition(w, t, target.key, principal);
     if (!c.ok) return toast.fail(new AppError('permission', c.reason ?? 'Không được phép.'));
     if (c.requiresComment) return setPending({ task: t, to: target });
-    await toast.run(() => transitionTask({ task: t, workflow: w, to: target.key, note: '', actor: profile, principal }), `Đã chuyển sang “${target.label}”.`);
+    await toast.run(() => transitionTask({ task: t, workflow: w, to: target.key, note: '', actor: profile, principal, extraNotices: auto.forTransition(t, w, target.key) }), `Đã chuyển sang “${target.label}”.`);
   }
 
   return (
@@ -92,7 +94,7 @@ export function KanbanView({ tasks, typeId }: { tasks: Task[]; typeId: string })
           if (!p || !profile) return;
           const w = v.wfOfTask(p.task);
           if (!w) return;
-          const res = await toast.run(() => transitionTask({ task: p.task, workflow: w, to: p.to.key, note, actor: profile, principal }), 'Đã cập nhật.');
+          const res = await toast.run(() => transitionTask({ task: p.task, workflow: w, to: p.to.key, note, actor: profile, principal, extraNotices: auto.forTransition(p.task, w, p.to.key) }), 'Đã cập nhật.');
           if (res.ok) setPending(null);
         }} />
     </>

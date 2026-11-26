@@ -3,9 +3,9 @@
 |---|---|---|
 | Lint | `npm run lint` | Đạt (0 lỗi, 0 cảnh báo) |
 | Typecheck | `npm run typecheck` | Đạt |
-| Unit nghiệp vụ | `npm test` | **119/119** (13 file: quyền, quy trình, tiến độ/rủi ro, trường động, thống kê, giao hàng loạt, cấu hình/diff, lặp, lọc, lịch/timeline, báo cáo/CSV, taskBuilder, ngày) |
-| Security Rules | `npm run test:rules` | **70/70** trên Firestore Emulator với `firestore.rules` thật |
-| E2E trình duyệt | `npm run test:e2e` | **14/14**: claim admin, kích hoạt & phân quyền, chặn truy cập trái quyền, tạo việc + trường bắt buộc, checklist/tự lưu/reload, nộp-trả lại-duyệt hàng loạt, Kanban kéo thả (cả bị từ chối), lịch/timeline/danh sách, giao hàng loạt, tổng quan/rủi ro/đơn vị/xuất CSV, đổi tài khoản không lộ dữ liệu, thêm loại việc không sửa code, responsive 390px không tràn ngang, **không lỗi console/request** |
+| Unit nghiệp vụ | `npm test` | **159/159** (19 file: quyền, quy trình, tiến độ/cảnh báo, trường động, thống kê, giao công việc, cấu hình/diff, lặp, lọc, lịch/timeline, báo cáo/CSV, taskBuilder, ngày, đăng nhập, tìm kiếm, lời nhắc, giờ công, khối lượng, mục tiêu, tự động hoá, ảnh chụp/burndown) |
+| Security Rules | `npm run test:rules` | **87/87** trên Firestore Emulator (gồm giờ công, mục tiêu, tự động hoá, ảnh chụp tuần, chế độ sáng/tối) với `firestore.rules` thật |
+| E2E trình duyệt | `npm run test:e2e` | **23/23**: claim admin, kích hoạt & phân quyền, chặn truy cập trái quyền, tạo việc + trường bắt buộc, checklist/tự lưu/reload, nộp-trả lại-duyệt hàng loạt, Kanban kéo thả (cả bị từ chối), lịch/timeline/danh sách, giao hàng loạt, tổng quan/rủi ro/đơn vị/xuất CSV, đổi tài khoản không lộ dữ liệu, thêm loại việc không sửa code, tìm kiếm Ctrl+K, hồ sơ cá nhân và đổi mật khẩu, lời nhắc có nội dung, bấm giờ/ghi giờ, mục tiêu, tự động hoá sinh thông báo, khối lượng/xu hướng, chế độ tối + manifest PWA, responsive 390px không tràn ngang, **không lỗi console/request** |
 | Build | `npm run build` | Đạt (bundle ~1,1 MB / 331 KB gzip) |
 | Bí mật | `npm run check:secrets` | Không phát hiện |
 | Phụ thuộc | `npm audit --omit=dev` | 0 lỗ hổng |

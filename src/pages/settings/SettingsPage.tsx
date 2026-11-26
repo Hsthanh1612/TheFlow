@@ -12,8 +12,9 @@ import { UsersTab } from './UsersTab';
 import { GeneralTab } from './GeneralTab';
 import { AiTab } from './AiTab';
 import { HistoryTab } from './HistoryTab';
+import { AutomationTab } from './AutomationTab';
 
-type Tab = 'types' | 'workflows' | 'roles' | 'templates' | 'units' | 'users' | 'general' | 'ai' | 'history';
+type Tab = 'types' | 'workflows' | 'roles' | 'templates' | 'units' | 'users' | 'general' | 'ai' | 'history' | 'automation';
 
 export function SettingsPage() {
   const { principal } = useAuth();
@@ -23,7 +24,7 @@ export function SettingsPage() {
   const items: { key: Tab; label: string }[] = [
     ...(canConfig ? ([{ key: 'types', label: 'Loại việc' }, { key: 'workflows', label: 'Quy trình duyệt' }, { key: 'roles', label: 'Vai trò & quyền' }, { key: 'templates', label: 'Mẫu việc & lặp' }, { key: 'units', label: 'Cây tổ chức' }] as { key: Tab; label: string }[]) : []),
     ...(canUsers ? [{ key: 'users' as Tab, label: 'Người dùng' }] : []),
-    ...(canConfig ? ([{ key: 'general', label: 'Thiết lập chung' }, { key: 'ai', label: 'Nhờ AI chỉnh cấu hình' }, { key: 'history', label: 'Lịch sử' }] as { key: Tab; label: string }[]) : []),
+    ...(canConfig ? ([{ key: 'general', label: 'Thiết lập chung' }, { key: 'automation', label: 'Tự động hoá' }, { key: 'ai', label: 'Nhờ AI chỉnh cấu hình' }, { key: 'history', label: 'Lịch sử' }] as { key: Tab; label: string }[]) : []),
   ];
   const [tab, setTab] = useState<Tab>(items[0]?.key ?? 'users');
   if (!d.ready) return <Loading />;
@@ -39,6 +40,7 @@ export function SettingsPage() {
       {tab === 'units' && <UnitsTab />}
       {tab === 'users' && <UsersTab />}
       {tab === 'general' && <GeneralTab />}
+      {tab === 'automation' && <AutomationTab />}
       {tab === 'ai' && <AiTab />}
       {tab === 'history' && <HistoryTab />}
     </div>

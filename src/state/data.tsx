@@ -1,16 +1,21 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { subscribeConfig, subscribeNotifications, subscribeTasks, type ConfigData } from '../services/firebase/subscriptions';
+import { subscribeAutomations, subscribeConfig, subscribeGoals, subscribeNotifications, subscribeSnapshots, subscribeTasks, subscribeTimeEntries, subscribeTimer, type ConfigData } from '../services/firebase/subscriptions';
 import type { AppError } from '../services/errors';
 import { useAuth } from './auth';
-import { scopeUnits } from '../domain/permissions';
+import { hasAnyScope, scopeUnits } from '../domain/permissions';
 import { categoryOf } from '../domain/workflow';
-import { DEFAULT_SETTINGS, type AppNotification, type OrgUnit, type StateCategory, type Task, type TaskType, type UserProfile, type Workflow } from '../domain/types';
+import { DEFAULT_SETTINGS, type AppNotification, type Automation, type Goal, type OrgUnit, type RunningTimer, type StateCategory, type Task, type TaskType, type TimeEntry, type UserProfile, type WeekSnapshot, type Workflow } from '../domain/types';
 import { todayLocal } from '../domain/dates';
 
 export interface DataState extends ConfigData {
   users: UserProfile[];
   tasks: Task[];
   notifications: AppNotification[];
+  timeEntries: TimeEntry[];
+  timer: RunningTimer | null;
+  goals: Goal[];
+  automations: Automation[];
+  snapshots: WeekSnapshot[]; // chỉ có với người có quyền xem khu vực Quản lý
   ready: boolean; // cấu hình + việc đã tải lần đầu
   errors: string[];
   today: string;
@@ -47,6 +52,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
   });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [timer, setTimer] = useState<RunningTimer | null>(null);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [snapshots, setSnapshots] = useState<WeekSnapshot[]>([]);
+  const canManage = hasAnyScope(principal, 'manage.view');
   const [loaded, setLoaded] = useState<Loaded>({});
   const [errors, setErrors] = useState<string[]>([]);
   const [today, setToday] = useState(todayLocal());
@@ -67,11 +78,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }, onErr),
       subscribeTasks(uid, scope === '*' ? '*' : scope, (t) => { setTasks(t); mark('tasks'); }, onErr),
       subscribeNotifications(uid, setNotifications, onErr),
+      subscribeTimeEntries(uid, scope === '*' ? '*' : scope, setTimeEntries, onErr),
+      subscribeTimer(uid, setTimer, onErr),
+      subscribeGoals(setGoals, onErr),
+      subscribeAutomations(setAutomations, onErr),
+      ...(canManage ? [subscribeSnapshots(setSnapshots, onErr)] : []),
     ];
     return () => offs.forEach((o) => o());
     // scopeKey thay cho scope (mảng mới mỗi render) để không tạo lại listener vô cớ
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid, scopeKey]);
+  }, [uid, scopeKey, canManage]);
 
   const value = useMemo<DataState>(() => {
     const unitMap = new Map(cfg.units.map((u) => [u.id, u]));
@@ -81,7 +97,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const wfOfType = (typeId: string) => wfMap.get(typeMap.get(typeId)?.workflowId ?? '');
     const wfOfTask = (t: Task) => wfMap.get(t.workflowId) ?? wfOfType(t.typeId);
     return {
-      ...cfg, tasks, notifications, errors, today,
+      ...cfg, tasks, notifications, timeEntries, timer, goals, automations, snapshots, errors, today,
       ready: ['units', 'roles', 'workflows', 'taskTypes', 'users', 'settings', 'tasks'].every((k) => loaded[k as keyof Loaded]),
       unitById: (id) => (id ? unitMap.get(id) : undefined),
       typeById: (id) => typeMap.get(id),
@@ -93,7 +109,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       categoryOfTask: (t) => categoryOf(wfOfTask(t), t.stateKey),
       stateLabel: (t) => wfOfTask(t)?.states.find((s) => s.key === t.stateKey)?.label ?? t.stateKey,
     };
-  }, [cfg, tasks, notifications, errors, today, loaded]);
+  }, [cfg, tasks, notifications, timeEntries, timer, goals, automations, snapshots, errors, today, loaded]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

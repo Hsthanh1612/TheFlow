@@ -8,6 +8,12 @@ Nguồn: `design/QuanLyCongViecKhoa-mockup.html`, `design/QuanLyCongViecKhoa-qua
 | Kanban (cột theo quy trình, kéo thả có kiểm quyền, thanh lọc, lưu bộ lọc) | Đã đáp ứng |
 | Danh sách (lọc/sắp xếp/chọn cột gồm trường động) | Đã đáp ứng |
 | Lịch (tháng, màu theo trạng thái, ngày lễ dương lịch) | Đã đáp ứng; **ngày lễ âm lịch chưa có** (cần bảng lịch âm) |
+| Theo dõi thời gian (bấm giờ, ghi tay "1h30", báo cáo giờ công, CSV) | Đã đáp ứng |
+| Khối lượng công việc theo người (điểm theo ưu tiên, 4 tuần tới) | Đã đáp ứng |
+| Mục tiêu OKR (kết quả chính + việc liên kết, sức khoẻ so với kế hoạch) | Đã đáp ứng |
+| Tự động hoá "khi … thì …" (thông báo) | Đã đáp ứng trong giới hạn Spark: sự kiện chạy lúc có người thao tác, quy tắc theo ngày chạy khi người nhận mở app; **không có máy chủ nền, không email/Zalo** |
+| Ảnh chụp tuần + burndown | Đã đáp ứng; ảnh chụp tự tạo khi người xem được toàn Khoa mở app lần đầu mỗi tuần (không chạy nền) |
+| Chế độ tối, cài như app (PWA) | Đã đáp ứng; **chưa có dữ liệu ngoại tuyến** (chỉ lưu "vỏ" app; dữ liệu luôn lấy từ máy chủ) |
 | Timeline (8 tuần, tuần hiện tại, nhóm theo) | Đã đáp ứng; kéo đổi ngày & phụ thuộc: *giai đoạn sau theo BRIEF* |
 | Chi tiết việc (checklist, bình luận @, thuộc tính, trường động, quy trình, nhật ký) | Đã đáp ứng; **đính kèm = liên kết** |
 | Cấu hình (6 tab + AI) | Đã đáp ứng (thêm Người dùng, Thiết lập chung, Lịch sử) |

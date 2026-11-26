@@ -1,3 +1,4 @@
+import { useAutomation } from '../state/automation';
 import { createContext, useContext, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Field, Modal } from './ui';
@@ -96,6 +97,7 @@ const PRIORITIES: { v: Priority; l: string }[] = [{ v: 'low', l: 'Thấp' }, { v
 function TaskFormBody({ init, onClose }: { init: { templateId?: string; typeId?: string }; onClose: () => void }) {
   const { taskTypes, workflows, users, units, templates, today, userById } = useData();
   const { profile, principal } = useAuth();
+  const auto = useAutomation();
   const toast = useToast();
   const nav = useNavigate();
   const tpl: TaskTemplate | undefined = templates.find((t) => t.id === init.templateId);
@@ -131,7 +133,7 @@ function TaskFormBody({ init, onClose }: { init: { templateId?: string; typeId?:
     if (Object.keys(errs).length > 0) return;
     setBusy(true);
     const res = await toast.run(
-      () => createTask({ type, workflow, title, description, priority, labels: labels.split(',').map((x) => x.trim()).filter(Boolean), startAt: null, dueAt: dueAt || null, unitId, assigneeIds: [assignee || profile.uid], collaboratorIds: [], reviewerIds: reviewer ? [reviewer] : [], checklist, customFields: custom, templateId: tpl?.id ?? null }, profile),
+      () => createTask({ type, workflow, title, description, priority, labels: labels.split(',').map((x) => x.trim()).filter(Boolean), startAt: null, dueAt: dueAt || null, unitId, assigneeIds: [assignee || profile.uid], collaboratorIds: [], reviewerIds: reviewer ? [reviewer] : [], checklist, customFields: custom, templateId: tpl?.id ?? null }, profile, auto.forCreate),
       'Đã tạo việc.',
     );
     setBusy(false);

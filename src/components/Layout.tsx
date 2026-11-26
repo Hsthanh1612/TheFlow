@@ -10,8 +10,9 @@ import { markRead } from '../services/firebase/notifyRepo';
 import { hasAnyScope, hasPerm } from '../domain/permissions';
 import { riskList } from '../domain/stats';
 import { vnDayMonth } from '../domain/dates';
-import { applyTheme, isThemeId } from '../state/theme';
+import { applyMode, applyTheme, isModeId, isThemeId } from '../state/theme';
 import { CommandPalette } from './CommandPalette';
+import { TimerChip } from './TimerChip';
 import { ThemePicker } from './ThemePicker';
 
 function NavItem({ to, icon, children, badge, badgeClass }: { to: string; icon: string; children: ReactNode; badge?: number; badgeClass?: string }) {
@@ -46,6 +47,7 @@ export function Layout({ children }: { children: ReactNode }) {
           <NavItem to="/tasks/kanban" icon="kanban">Bảng Kanban</NavItem>
           <NavItem to="/tasks/calendar" icon="calendar">Lịch Khoa</NavItem>
           <NavItem to="/tasks/timeline" icon="timeline">Timeline</NavItem>
+          <NavItem to="/goals" icon="target">Mục tiêu</NavItem>
           <NavItem to="/docs" icon="doc">Tài liệu</NavItem>
           {(canConfig || canUsers) && <NavItem to="/settings" icon="settings">Cấu hình</NavItem>}
           {showManage && (
@@ -56,6 +58,9 @@ export function Layout({ children }: { children: ReactNode }) {
               {canBulk && <NavItem to="/manage/assign" icon="users">Giao công việc</NavItem>}
               <NavItem to="/manage/risks" icon="warn" badge={risks} badgeClass="late">Cảnh báo quá hạn</NavItem>
               <NavItem to="/manage/units" icon="users">Tiến độ đơn vị</NavItem>
+              <NavItem to="/manage/workload" icon="workload">Khối lượng công việc</NavItem>
+              <NavItem to="/manage/time" icon="clock">Giờ công</NavItem>
+              <NavItem to="/manage/trends" icon="trend">Xu hướng</NavItem>
               {canReport && <NavItem to="/manage/reports" icon="doc">Báo cáo &amp; xuất file</NavItem>}
             </>
           )}
@@ -97,6 +102,7 @@ function Topbar() {
   useEffect(() => { setOpenBell(false); setOpenMenu(false); setPalette(false); }, [loc.pathname]);
   // Chủ đề màu đã lưu trong hồ sơ tài khoản được áp dụng khi đăng nhập (đồng bộ giữa các thiết bị).
   useEffect(() => { if (isThemeId(profile?.theme)) applyTheme(profile.theme); }, [profile?.theme]);
+  useEffect(() => { if (isModeId(profile?.mode)) applyMode(profile.mode); }, [profile?.mode]);
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPalette((v) => !v); } };
     addEventListener('keydown', h);
@@ -124,6 +130,7 @@ function Topbar() {
       </form>
       {palette && <CommandPalette onClose={() => setPalette(false)} />}
       <div className="tr">
+        <TimerChip />
         <span className={`sync${online && toast.pending === 0 ? '' : ' warn'}`} role="status">
           {!online ? 'Mất kết nối — chưa đồng bộ' : toast.pending > 0 ? 'Đang gửi lên máy chủ…' : 'Đã đồng bộ'}
         </span>

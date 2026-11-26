@@ -228,6 +228,91 @@ test('10. tổng quan, rủi ro, tiến độ đơn vị, báo cáo hiển thị
   expect(dl.suggestedFilename()).toMatch(/\.csv$/);
 });
 
+test('10b. theo dõi thời gian: bấm giờ, ghi tay, đọc chuỗi giờ, báo lỗi rõ; báo cáo giờ công thấy số liệu', async () => {
+  const p = admin.page;
+  await p.goto('/#/tasks/list');
+  await p.getByRole('link', { name: 'Họp toàn Khoa cuối kỳ' }).first().click();
+  const card = p.getByLabel('Thời gian thực hiện');
+  await card.getByRole('button', { name: 'Bắt đầu bấm giờ' }).click();
+  await expect(p.getByRole('group', { name: 'Đang bấm giờ' })).toBeVisible(); // chip trên thanh đầu trang
+  await card.getByRole('button', { name: 'Dừng và ghi giờ' }).click();
+  await expect(p.getByText('Đã dừng và ghi giờ.')).toBeVisible();
+  await expect(p.getByRole('group', { name: 'Đang bấm giờ' })).toHaveCount(0);
+  await expect(card.getByText('(bấm giờ)')).toBeVisible();
+  // nhập tay: sai định dạng bị từ chối, "1h30" được hiểu là 1 giờ 30 phút
+  await card.getByLabel('Thời gian', { exact: true }).fill('abc');
+  await card.getByRole('button', { name: 'Ghi giờ', exact: true }).click();
+  await expect(p.getByText('Chưa hiểu thời gian')).toBeVisible();
+  await card.getByLabel('Thời gian', { exact: true }).fill('1h30');
+  await card.getByLabel('Ghi chú').fill('Chuẩn bị chương trình');
+  await card.getByRole('button', { name: 'Ghi giờ', exact: true }).click();
+  await expect(card.getByText('1 giờ 30 phút')).toBeVisible();
+  await expect(card.getByText('Chuẩn bị chương trình')).toBeVisible();
+  // báo cáo giờ công cho quản lý
+  await p.goto('/#/manage/time');
+  await expect(p.getByRole('heading', { level: 1, name: 'Giờ công' })).toBeVisible();
+  await expect(p.getByText('Tổng thời gian')).toBeVisible();
+  await expect(p.getByText('2 bản ghi')).toBeVisible();
+});
+
+test('10c. mục tiêu: tạo mục tiêu có kết quả chính và liên kết việc; tiến độ tính đúng', async () => {
+  const p = admin.page;
+  await p.goto('/#/goals');
+  await expect(p.getByRole('heading', { level: 1, name: 'Mục tiêu' })).toBeVisible();
+  await p.getByRole('button', { name: 'Tạo mục tiêu' }).click();
+  const dlg = p.getByRole('dialog');
+  await dlg.getByLabel('Tên mục tiêu *').fill('Hoàn thành kiểm định');
+  await dlg.getByRole('button', { name: 'Thêm kết quả chính' }).click();
+  await dlg.getByLabel('Nội dung kết quả chính').fill('Minh chứng đã thu thập');
+  await dlg.getByLabel('Hiện tại').fill('1');
+  await dlg.getByLabel('Chỉ tiêu').fill('2');
+  await dlg.getByLabel('Tìm việc để liên kết').fill('hop toan khoa');
+  await dlg.getByRole('button', { name: /Họp toàn Khoa cuối kỳ/ }).click();
+  await dlg.getByRole('button', { name: 'Lưu mục tiêu' }).click();
+  await expect(p.getByText('Đã tạo mục tiêu.')).toBeVisible();
+  const card = p.getByRole('article', { name: 'Hoàn thành kiểm định' });
+  await expect(card.getByText('50%').first()).toBeVisible(); // 1/2 kết quả chính
+  await expect(card.getByText('Việc liên kết: 0/1 xong')).toBeVisible();
+});
+
+test('10d. tự động hoá: quy tắc "chuyển sang Đang làm thì báo người phụ trách" gửi thông báo thật; giảng viên không sửa được', async () => {
+  const p = admin.page;
+  await p.goto('/#/settings');
+  await p.getByRole('tab', { name: 'Tự động hoá' }).click();
+  await p.getByRole('button', { name: 'Thêm quy tắc' }).first().click();
+  const dlg = p.getByRole('dialog');
+  await dlg.getByLabel('Tên quy tắc').fill('Báo khi bắt đầu làm');
+  await dlg.getByLabel('Chuyển sang').selectOption({ label: 'Đang làm' });
+  await dlg.getByLabel('Người phụ trách').check();
+  await dlg.getByLabel('Người duyệt').uncheck();
+  await dlg.getByLabel('Nội dung thông báo').fill('Bắt đầu: {title}');
+  await dlg.getByRole('button', { name: 'Lưu quy tắc' }).click();
+  await expect(p.getByText('Đã lưu quy tắc.')).toBeVisible();
+  // chuyển trạng thái một việc của giảng viên An → An nhận thông báo do quy tắc sinh ra
+  await p.goto('/#/tasks/list');
+  await p.getByRole('link', { name: 'Họp toàn Khoa cuối kỳ' }).first().click();
+  await p.getByRole('button', { name: /Chuyển: Đang làm/ }).click();
+  await expect(p.getByText('Đã chuyển sang “Đang làm”.')).toBeVisible();
+  await an.page.goto('/#/');
+  const bell = an.page.getByRole('button', { name: /Thông báo/ });
+  if ((await bell.getAttribute('aria-expanded')) !== 'true') await bell.click(); // hộp có thể còn mở từ bước trước
+  await expect(an.page.getByRole('dialog', { name: 'Thông báo' }).getByText('Bắt đầu: Họp toàn Khoa cuối kỳ')).toBeVisible();
+  // giảng viên không có tab Cấu hình
+  await expect(an.page.getByRole('link', { name: 'Cấu hình' })).toHaveCount(0);
+});
+
+test('10e. khối lượng công việc và xu hướng: hiển thị người, tuần, ảnh chụp tự động', async () => {
+  const p = admin.page;
+  await p.goto('/#/manage/workload');
+  await expect(p.getByRole('heading', { level: 1, name: 'Khối lượng công việc' })).toBeVisible();
+  await expect(p.getByRole('columnheader', { name: 'Tuần này', exact: true })).toBeVisible();
+  await expect(p.getByRole('rowheader', { name: new RegExp(LECT.name) })).toBeVisible();
+  await p.goto('/#/manage/trends');
+  await expect(p.getByRole('heading', { level: 1, name: 'Xu hướng' })).toBeVisible();
+  // quản lý toàn Khoa mở app là tự chụp ảnh tuần này → nút đã bị khoá
+  await expect(p.getByRole('button', { name: 'Tuần này đã chụp' })).toBeDisabled();
+});
+
 test('11. đổi tài khoản: dữ liệu người trước không còn hiển thị; đăng xuất/đăng nhập lại', async () => {
   const p = an.page;
   await p.getByRole('button', { name: /Tài khoản/ }).click();
@@ -301,6 +386,24 @@ test('13c. tìm kiếm nhanh Ctrl+K: tìm theo tên không dấu, đi tới tran
   await expect(p.getByText('Không tìm thấy kết quả')).toBeVisible();
   await p.keyboard.press('Escape');
   await expect(p.getByRole('dialog', { name: 'Tìm kiếm nhanh' })).toHaveCount(0);
+});
+
+test('13c2. chế độ tối được nhớ; có manifest PWA và biểu tượng', async ({ request }) => {
+  const p = admin.page;
+  await p.goto('/#/profile');
+  await p.getByRole('button', { name: 'Tối', exact: true }).click();
+  await expect(p.locator('html')).toHaveAttribute('data-mode', 'dark');
+  await p.reload();
+  await expect(p.locator('html')).toHaveAttribute('data-mode', 'dark');
+  await p.getByRole('button', { name: 'Sáng', exact: true }).click();
+  await expect(p.locator('html')).toHaveAttribute('data-mode', 'light');
+  await expect(p.locator('link[rel="manifest"]')).toHaveCount(1);
+  const m = await request.get('/manifest.webmanifest');
+  expect(m.ok()).toBe(true);
+  const json = (await m.json()) as { name: string; display: string; icons: { src: string }[] };
+  expect(json.name).toBe('Việc của Khoa');
+  expect(json.display).toBe('standalone');
+  for (const i of json.icons) expect((await request.get(`/${i.src}`)).ok(), i.src).toBe(true);
 });
 
 test('13d. hồ sơ cá nhân: đổi họ tên, màu giao diện theo tài khoản, đổi mật khẩu', async ({ browser }) => {
